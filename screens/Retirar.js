@@ -3,9 +3,14 @@ import { Text, StyleSheet, View, Image, TouchableOpacity, TextInput, Alert } fro
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
+import axios from 'axios';
+import CustomAlert from './CustomAlert';
 export default function Retirar({ route }) {
     const handleInvertirClick = () => {
-        if (usuario.verificacion !== 1) {
+        console.log('antes de verificar', usuario.verificado_ine)
+        const entero = parseInt(usuario.verificado_ine, 10);
+        console.log('antes de segundo', entero)
+        if (entero == 0) {
             Alert.alert(
                 'Verificación requerida',
                 'Para realizar este proceso, primero debe verificar su cuenta.',
@@ -14,9 +19,10 @@ export default function Retirar({ route }) {
                 ]
             );
         } else {
-            navigation.navigate('Documentos');
+            handleRetirar();
         }
     };
+    const [showAlert, setShowAlert] = useState(false);
     const navigation = useNavigation();
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria } = route.params;
     const drawer = useRef(null);
@@ -53,7 +59,7 @@ export default function Retirar({ route }) {
         <View style={[styles.container, styles.navigationContainer]}>
             <View style={styles.profileInfo}>
                 <Image
-                    source={{ uri: `http://192.168.1.69:3000/uploads/${usuario.id}.jpg` }}
+                    source={{ uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg` }}
                     style={styles.profileImageDraw}
                 />
             </View>
@@ -88,10 +94,36 @@ export default function Retirar({ route }) {
         // Formatear el número con comas para separar los miles
         return number.toLocaleString('en-US');
     };
+
+    const handleChange = (text) => {
+        setAmount(text);
+      };
+      const handleRetirar = async () => {
+        if(amount){
+            setShowAlert(true);
+            console.log('se procede a retirar: ',amount);
+            console.log('se envia saldo total:',usuario.saldo+affiliateBonus);
+            const datos = await axios.post('http://192.168.1.71:3000/Retirar', {
+                usuarioId: usuario.id,
+                saldo: amount, 
+                saldototal:usuario.saldo+affiliateBonus
+            });
+            console.log('fue un exito',datos.data.alerta);
+            if(datos.data.alerta==1){
+                setShowAlert(false);
+                Alert.alert('Monto retirado exitosamente')
+            }
+            
+        }
+        else{
+            Alert.alert('No haz insertado monto a retirar');
+        }
+      }
+    
     return (
         <View style={{ flex: 1 }}>
             <View style={styles.containerDraw}>
-
+            <CustomAlert visible={showAlert} message="Retirando..." />
             </View>
             <View style={styles.container}>
                 <View style={styles.header1}>
@@ -106,7 +138,7 @@ export default function Retirar({ route }) {
                             // Intenta cargar la imagen
                             <Image
                                 source={{
-                                    uri: `http://192.168.1.69:3000/uploads/${usuario.id}.jpg`,
+                                    uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
                                 }}
                                 style={styles.profileImage}
                                 onError={() => setImageError(true)} // Manejar error de carga de imagen

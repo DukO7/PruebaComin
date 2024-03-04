@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const Mercadopago = require('mercadopago');
 // Configurar la conexión a la base de datos MySQL
 const connection = mysql.createConnection({
   host: 'localhost', // La dirección del servidor MySQL
@@ -14,9 +15,6 @@ const connection = mysql.createConnection({
   password: '', // La contraseña de MySQL
   database: 'fintech_app' // El nombre de tu base de datos MySQL
 });
-
-
-
 // Establecer la conexión a la base de datos
 connection.connect(err => {
   if (err) {
@@ -40,6 +38,7 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname)); // Nombre de archivo único
   }
 });
+
 
 const upload = multer({ storage: storage });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -74,6 +73,84 @@ app.post('/upload', upload.single('foto_usuario'), (req, res) => {
 const imageUrl = `${req.protocol}://${serverIP}/${imagePath}`;
 res.status(200).json({ imageUrl: imageUrl });
     });
+  } catch (error) {
+    console.error('Error al procesar imagen:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+
+////// Documentos:
+
+const storage2 = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'documentos_ine/'); // Directorio donde se almacenarán las imágenes
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Nombre de archivo único
+  }
+});
+
+const documentos_ine = multer({ storage: storage2 });
+app.use('/documentos_ine', express.static(path.join(__dirname, 'documentos_ine')));
+app.post('/documentos_ine', documentos_ine.single('Documento'), (req, res) => {
+  try {
+    const userId = req.body.id;
+    if (!userId) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    // Obtener la extensión de la imagen
+    const imageExtension = path.extname(req.file.originalname);
+
+    // Construir la ruta de archivo en el servidor
+    const imagePath = `documentos_ine/${userId}${imageExtension}`;
+
+    // Mover el archivo a la ruta de archivo en el servidor
+    if (fs.existsSync(imagePath)) {
+      const imagePath1 = `documentos_ine/${userId}-1${imageExtension}`;
+      fs.renameSync(req.file.path, imagePath1);
+    }
+    fs.renameSync(req.file.path, imagePath);
+    const exito = 1;
+    res.status(200).send(exito);
+    console.log('se envia exito');
+  } catch (error) {
+    console.error('Error al procesar imagen:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+const storage3 = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'documentos_curp/'); // Directorio donde se almacenarán las imágenes
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Nombre de archivo único
+  }
+});
+
+
+const documentos_curp = multer({ storage: storage3 });
+app.use('/documentos_curp', express.static(path.join(__dirname, 'documentos_curp')));
+app.post('/documentos_curp', documentos_curp.single('Documento'), (req, res) => {
+  try {
+    const userId = req.body.id;
+    if (!userId) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    // Obtener la extensión de la imagen
+    const imageExtension = path.extname(req.file.originalname);
+
+    // Construir la ruta de archivo en el servidor
+    const imagePath = `documentos_curp/${userId}${imageExtension}`;
+
+    // Mover el archivo a la ruta de archivo en el servidor
+    fs.renameSync(req.file.path, imagePath);
+    const exito = 1;
+    res.status(200).send(exito);
+    console.log('se envia exito');
   } catch (error) {
     console.error('Error al procesar imagen:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
@@ -440,6 +517,47 @@ app.post("/actualizar_verificado_curp", (req, res) => {
   });
 });
 
+
+app.post("/Act_inversion", (req, res) => {
+  const { usuarioId, saldo } = req.body;
+
+  // Query para actualizar los datos en la base de datos
+  const query = `UPDATE usuarios SET saldo=saldo+? WHERE id=?`;
+
+  // Ejecutar la consulta
+  connection.query(query, [saldo, usuarioId], (error, results) => {
+    if (error) {
+      console.error("Error al actualizar datos del usuario:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+      return;
+    }
+    console.log("Datos del usuario verificacion curp exitoso:", results);
+    res.status(200).json({ message: "Datos del usuario actualizados correctamente" });
+  });
+});
+
+app.post("/Retirar", (req, res) => {
+  const { usuarioId, saldo,saldototal } = req.body;
+   
+  if(saldototal>=saldo){
+    const query = `UPDATE usuarios SET saldo=saldo-? WHERE id=?`;
+
+    // Ejecutar la consulta
+    connection.query(query, [saldo, usuarioId,saldo], (error, results) => {
+      if (error) {
+        console.error("Error al actualizar datos del usuario:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+        return;
+      }
+      const alerta = 1;
+      console.log("Datos del usuario verificacion curp exitoso:", results);
+      res.status(200).json({ message: "Datos del usuario actualizados correctamente",alerta});
+    });
+  }
+  // Query para actualizar los datos en la base de datos
+  
+});
+
 app.post("/act-datosbanco", (req, res) => {
   const {
     titular_cuenta,numero_tarjeta,banco,nombre_cuenta,numero_cuenta,saldo_afiliados,usuarioId} = req.body;
@@ -484,6 +602,111 @@ app.post("/act-datosbanco", (req, res) => {
   );
 });
 
+app.post("/usuarios", (req, res) => {
+  const { usuarioId, } = req.body;
+    const query = `SELECT * FROM usuarios WHERE id=?`;
+
+    connection.query(query, usuarioId, (error, results) => {
+      if (error) {
+        console.error("Error al OBTENER datos del usuario:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+        return;
+      }
+      const data = results[0];
+      console.log("datos obtenidos correctamente", data);
+      res.status(200).json({ message: "Datos del usuario actualizados correctamente",data});
+    });
+  
+});
+
+
+const indexRouter = require("../routes/index");
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use("/", indexRouter);
+
+// app.post('/payment', (req, res) => {
+//   const { amount, description, email } = req.body;
+
+//   // Crea el objeto de preferencia de pago
+//   const preference = {
+//     items: [
+//       {
+//         title: 'Producto 1',
+//         quantity: 1,
+//         unit_price: amount,
+//       },
+//     ],
+//     back_urls: {
+//       success: 'https://www.tusitio.com/success',
+//       failure: 'https://www.tusitio.com/failure',
+//       pending: 'https://www.tusitio.com/pending',
+//     },
+//     auto_return: 'approved',
+//     payment_methods: {
+//       excluded_payment_methods: [
+//         'atm',
+//         'account_money',
+//         'bank_transfer',
+//         'boleta_bapro',
+//         'rapipago',
+//         'pagofacil',
+//         'baloto',
+//         'dinero_mail',
+//         'prepaid_card',
+//         'ticket',
+//         'utility_bill',
+//         'debit_card',
+//         'money',
+//         'ticket_boleto',
+//         'quick_payment',
+//       ],
+//       installments: 12,
+//     },
+//     payer: {
+//       email,
+//     },
+//     notification_url: 'https://www.tusitio.com/notification',
+//     external_reference: 'ORDER_ID_12345',
+//   };
+
+//   app.post('/process_payment', async (req, res) => {
+//     const { payerFirstName, payerLastName, email } = req.body;
+  
+//     try {
+//       const paymentData = {
+//         transaction_amount: 5000,
+//         description: 'Nombre del Producto',
+//         payment_method_id: 'clabe', // Método de pago SPEI
+//         payer: {
+//           entity_type: 'individual',
+//           email: email,
+//           first_name: payerFirstName,
+//           last_name: payerLastName
+//         }
+//       };
+  
+//       const payment = await MercadoPago.payment.save(paymentData);
+  
+//       res.status(200).json(payment);
+//     } catch (error) {
+//       res.status(500).json({ error: error.message });
+//     }
+//   });
+
+//   // Crea la preferencia de pago
+//   mercadopago.preferences
+//     .create(preference)
+//     .then(response => {
+//       res.json({ preferenceId: response.body.id });
+//     })
+//     .catch(error => {
+//       console.log(error);
+//       res.status(500).json({ error: error.message });
+//     });
+// });
+
+
 // Escuchar en el puerto 3000
 app.listen(3000, () => {
   console.log('Servidor backend escuchando en el puerto 3000');
@@ -503,4 +726,7 @@ app.get('/upload', (req, res) => {
 
 app.get('/update-balance', (req, res) => {
   res.send('¡Bienvenido upload!');
+});
+app.get('/documentos', (req, res) => {
+  res.send('¡Bienvenido documentos!');
 });

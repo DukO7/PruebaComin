@@ -83,7 +83,7 @@ export default function Cartera({ route }) {
       <Text style={styles.balanceAmount}>$ {(usuario.saldo || 0) + (affiliateBonus || 0)}</Text>
       <View style={styles.cardContent}>
         
-        <Text style={styles.cardNameText}>Nombre de la cuenta</Text>
+        <Text style={styles.cardNameText}>{cuentaBancaria.nombre_cuenta}</Text>
       </View>
       <Text style={styles.cardNumberText}>{cuentaBancaria.numero_tarjeta}</Text>
     </View>

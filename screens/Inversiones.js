@@ -1,40 +1,149 @@
-import React, { Component, useState } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity,Alert } from "react-native"
+import React, { Component, useState,useEffect } from "react";
+import { Text, StyleSheet, View, Image, TouchableOpacity, Alert, Linking, TextInput } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
+import axios from 'axios';
+import { openBrowserAsync } from 'expo-web-browser';
+import CustomAlert from './CustomAlert';
 export default function Inversiones({ route }) {
     
+    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,} = route.params;
+    // const [updatedUser, setUpdatedUser] = useState(usuario);
+    // useEffect(() => {
+    //     const fetchUserData = async () => {
+    //       try {
+    //         const response = await axios.post('http://192.168.1.71:3000/usuarios', {
+    //             usuarioId: usuario.id,
+    //         });
+    //         console.log('datos regresados de usuarios', response.data);
+    //         if (response.data.data) {
+    //           setUpdatedUser(response.data.data);
+    //           console.log('son los datos que recibo:', updatedUser);
+    //         } else {
+    //           console.error('No se recibieron datos del servidor');
+    //         }
+    //       } catch (error) {
+    //         console.error(error);
+    //       }
+    //     };
+    //     fetchUserData();
+    //   }, [usuario]);
+    // console.log('son los datos que recibo:',updatedUser);
+
+    const [showAlert, setShowAlert] = useState(false);
+    const [textInputValue, setTextInputValue] = useState("");
+    
     const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
-    const handleInvertirClick = () => {
-        if (usuario.verificacion !== 1) {
-          Alert.alert(
-            'Verificación requerida',
-            'Para realizar este proceso, primero debe verificar su cuenta.',
-            [
-              { text: 'OK', onPress: () => navigation.navigate('Documentos',{usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria}) }
-            ]
-          );
-        } else {
-          navigation.navigate('Documentos');
-        }
-      };
-    const openModal = () => {
-      setIsModalVisible(true);
+    const PaymentService = {
+        async createPayment() {
+            const url = "https://api.mercadopago.com/checkout/preferences";
+
+            const body = {
+                payer_email: usuario.correo_electronico,
+                items: [
+                    {
+                        title: "Inversion",
+                        description: "Inversion Fintech",
+                        picture_url: "http://www.myapp.com/myimage.jpg",
+                        category_id: "services",
+                        quantity: 1,
+                        unit_price: parseFloat(textInputValue)
+                    }
+                ],
+                back_urls: {
+                    failure: "/failure",
+                    pending: "/pending",
+                    success: "http://localhost:8081/Inversiones"
+                }
+            };
+
+            const payment = await axios.post(url, body, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
+                }
+            });
+
+            return payment;
+        },
+        checkPaymentStatus(preferenceId) {
+            const url = `https://api.mercadopago.com/checkout/preferences/${preferenceId}`;
+        
+            axios.get(url, {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
+              }
+            }).then((response) => {
+              const { status } = response.data;
+        
+              if (status === 'approved') {
+                console.log('El pago fue exitoso.');
+              } else if (status === 'pending') {
+                console.log('El pago está pendiente.');
+              } else if (status === 'rejected') {
+                console.log('El pago fue rechazado.');
+              }
+            }).catch((error) => {
+              console.error(error);
+            });
+          }
     };
-  
+    const handlePress3 = async () => {
+        try {
+            if(textInputValue){
+                setShowAlert(true);
+                const payment = await PaymentService.createPayment();
+                console.log(payment.data.init_point);
+                await axios.post('http://192.168.1.71:3000/Act_inversion', {
+                    usuarioId: usuario.id,
+                    saldo: textInputValue, 
+                });
+                await openBrowserAsync(payment.data.init_point);
+                PaymentService.checkPaymentStatus(payment.data.id);
+                console.log('datos recibidos',payment.data.id)
+                setShowAlert(false);
+            }else{
+                Alert.alert('No hay cantidad seleccionada')
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const handleInvertirClick = () => {
+        console.log('antes de verificar', usuario.verificado_ine)
+        const entero = parseInt(usuario.verificado_ine, 10);
+        console.log('antes de segundo', entero)
+        if (entero == 1) {
+            alert('Verificación requerida, Para realizar este proceso, primero debe verificar su cuenta.');
+            navigation.navigate('IneyCurp', {
+                usuario: usuario,
+                affiliateBonus: affiliateBonus,
+                datosafiliados: datosafiliados,
+                inversionesPorFecha: inversionesPorFecha,
+                cuentaBancaria: cuentaBancaria,
+            });
+        } else {
+            handlePress3();
+        }
+    };
+    const openModal = () => {
+        setIsModalVisible(true);
+    };
+
     const closeModal = () => {
-      setIsModalVisible(false);
+        setIsModalVisible(false);
     };
 
     const handlePress1 = (screen) => {
         console.log("Navigating to", screen);
-        closeModal(); // Cierra el SidebarModal después de presionar un elemento
-         navigation.navigate(screen, { usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria });
-      };
-    
+        closeModal(); 
+        navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria });
+    };
+
     const navigation = useNavigation();
-    const { usuario, affiliateBonus,datosafiliados,inversionesPorFecha,cuentaBancaria } = route.params;
+
     const handlePress = (screenName) => {
         navigation.navigate(screenName);
     };
@@ -48,42 +157,42 @@ export default function Inversiones({ route }) {
 
         <View style={styles.container}>
             <View style={styles.header1}>
+            <CustomAlert visible={showAlert} message="Redirigiendo..." />
+                <View style={styles.profileInfo}>
+                    {imageError ? (
+                        
+                        <Image
+                            source={require("../assets/usuario1.jpg")}
+                            style={styles.profileImage}
+                        />
+                    ) : (
+                        
+                        <Image
+                            source={{
+                                uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                            }}
+                            style={styles.profileImage}
+                            onError={() => setImageError(true)} 
+                        />
+                    )}
+                    <Text style={styles.textHeader1}>{usuario.nombre}</Text>
+                </View>
                 
-            <View style={styles.profileInfo}>
-            {imageError ? (
-            // Mostrar un icono en lugar de la imagen si hay un error
-            <Image
-              source={require("../assets/usuario1.jpg")}
-              style={styles.profileImage}
-            />
-          ) : (
-            // Intenta cargar la imagen
-            <Image
-              source={{
-                uri: `http://192.168.1.69:3000/uploads/${usuario.id}.jpg`,
-              }}
-              style={styles.profileImage}
-              onError={() => setImageError(true)} // Manejar error de carga de imagen
-            />
-          )}
-        <Text style={styles.textHeader1}>{usuario.nombre}</Text>
-    </View>
-                {/* Aquí puedes personalizar el contenido del header */}
                 <View style={styles.containermenu}>
-                <TouchableOpacity
-  style={styles.menuButton}
-  onPress={() => {
-    if (isModalVisible) {
-      // Si el modal está abierto, ciérralo
-      closeModal();
-    } else {
-      // Si el modal está cerrado, ábrelo
-      openModal();
-    }
-  }}
->
-        <Ionicons name="menu" size={30} color="white" />
-      </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        onPress={() => {
+                            if (isModalVisible) {
+                                
+                                closeModal();
+                            } else {
+                                
+                                openModal();
+                            }
+                        }}
+                    >
+                        <Ionicons name="menu" size={30} color="white" />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -101,19 +210,19 @@ export default function Inversiones({ route }) {
                 <View style={styles.divider} />
             </View>
             <View style={styles.archivo}>
-                <Image source={require('../assets/archivo1.png')} style={styles.profileImage1}/>
-                <Text style={{color:'white',marginLeft:10}}> Archivo Cargado </Text>
+                <Image source={require('../assets/archivo1.png')} style={styles.profileImage1} />
+                <Text style={{ color: 'white', marginLeft: 10 }}> Archivo Cargado </Text>
             </View>
             <View style={styles.barradoble}>
-            <View style={styles.moneyBar}>
-                
-                <Text > Satrter </Text>
+                <TextInput
+                    style={styles.moneyBar}
+                    onChangeText={setTextInputValue}
+                    value={textInputValue}
+                    placeholder="Monto a invertir"
+                    keyboardType="numeric"
+                />
             </View>
-            <View style={styles.moneyBar}>
-               
-                <Text >+500 </Text>
-            </View>
-            </View>
+
             <View style={styles.FatherBoton}>
 
                 <TouchableOpacity style={styles.cajaBoton} onPress={handleInvertirClick} >
@@ -126,31 +235,31 @@ export default function Inversiones({ route }) {
 
             </View>
             <View style={styles.containernav}>
-                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })}>
-                    <Ionicons name="wallet" size={30} color="white" />
+                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                    <Ionicons name="wallet" size={30} color="white"/>
                     <Text style={styles.textnavbar}>Cartera</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })}>
-                    <Ionicons name="analytics" size={30} color="#7494b3" />
+                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                    <Ionicons name="analytics" size={30} color="#7494b3"/>
                     <Text style={styles.textnavbar2}>Inversiones</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })}>
-                    <Ionicons name="arrow-back" size={30} color="white" />
+                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                    <Ionicons name="arrow-back" size={30} color="white"/>
                     <Text style={styles.textnavbar2}>Retirar</Text>
                 </TouchableOpacity>
             </View>
             <SidebarModal
-        isVisible={isModalVisible} // Pasa el estado de visibilidad al SidebarModal
-        onClose={closeModal} // Pasa la función para cerrar el SidebarModal al componente
-        onPress={handlePress1} // Pasa la función para manejar la navegación al componente
-        usuario={usuario}
-      />
+                isVisible={isModalVisible}
+                onClose={closeModal} 
+                onPress={handlePress1} 
+                usuario={usuario}
+            />
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    archivo:{
+    archivo: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'black',
@@ -163,9 +272,9 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginTop: 30,
     },
-    barradoble:{
-        flexDirection: 'row',
+    barradoble: {
         alignItems: 'center',
+        right: 20
     },
     container: {
         flex: 1,
@@ -185,7 +294,7 @@ const styles = StyleSheet.create({
     textHeader1: {
         color: 'white',
         marginLeft: 10,
-        marginTop:40
+        marginTop: 40
     },
     profileSection: {
         flexDirection: 'row',
@@ -197,14 +306,14 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         left: 0,
-        borderWidth: 2, 
+        borderWidth: 2,
     },
     profileImage: {
         width: 50,
         height: 50,
         borderRadius: 80,
         marginLeft: 20,
-        top:20,
+        top: 20,
         left: 0,
         borderColor: 'white',
         borderWidth: 2,
@@ -212,7 +321,7 @@ const styles = StyleSheet.create({
 
     profileInfo: {
         flexDirection: 'row',
-    alignItems: 'center',
+        alignItems: 'center',
     },
     profileTitle: {
         fontSize: 18,
@@ -370,13 +479,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderWidth: 1,
         width: 150,
+        textAlign: 'center',
         marginLeft: 10,
         borderColor: 'black',
-        paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 5,
         marginTop: 30,
-        marginLeft:35
+        marginLeft: 35
     },
     moneyText: {
         marginLeft: 60,

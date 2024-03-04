@@ -3,16 +3,12 @@ import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button } from "re
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
-import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { Buffer } from 'buffer';
-import * as MediaLibrary from 'expo-media-library';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
-import CustomAlert from './CustomAlert';
-import SquareInAppPayments from 'react-native-square-in-app-payments';
-export default function VerificacionC({ route,onRequestClose  }) {
+export default function IneyCurp3({ route  }) {
     const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [photoUri, setPhotoUri] = useState(null);
@@ -28,7 +24,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
     }, []);
  
     const [ineImage, setIneImage] = useState(null); // Estado para almacenar la imagen de la INE
-    const [showAlert, setShowAlert] = useState(false);// Estado para controlar la visibilidad del alert
+    const [showAlert, setShowAlert] = useState(true); // Estado para controlar la visibilidad del alert
     const [verified, setVerified] = useState(false); // Estado para verificar si el usuario ha verificado sus datos
 
     const navigation = useNavigation();
@@ -76,87 +72,21 @@ export default function VerificacionC({ route,onRequestClose  }) {
     const validateIne = (text) => {
         // Convertir el texto a minúsculas para hacer la búsqueda sin distinción entre mayúsculas y minúsculas
         const lowerCaseText = text.toLowerCase();
-      
-        // Obtener el nombre del usuario y dividirlo en palabras clave
-        const keywords = usuario.nombre.toLowerCase().split(' ');
-      
+        // Lista de palabras clave a buscar
+        const keywords = ["luis", "fernando", "lechuga", "rendon"];
         // Contador para llevar el registro de cuántas palabras clave están presentes en el texto
         let count = 0;
-        console.log('datos separados usuario:',keywords);
         // Verificar cuántas palabras clave están presentes en el texto
         keywords.forEach(keyword => {
           if (lowerCaseText.includes(keyword)) {
             count++;
           }
         });
-      
         // Devolver true si al menos dos palabras clave están presentes
         return count >= 2;
       };
       
-      const extractTextFromImage = async () => {
-        if (!photoUri) {
-          console.log("No se ha tomado ninguna foto.");
-          return;
-        }
-        setShowAlert(true);
-        console.log("Ruta de la imagen:", photoUri);
-      
-        try {
-          const imageAsset = await FileSystem.getInfoAsync(photoUri);
-          const imageBase64 = imageAsset.size > 1000000 ? await reduceImage(photoUri) : await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
-          
-          const text = await detectTextFromImage(imageBase64);
-      
-          if (text) {
-            console.log("Texto extraído:", text);
-      
-            const isValidIne = validateIne(text);
-            console.log("Es CURP válida:", isValidIne);
-      
-            if (isValidIne) {
-                // Actualizar el campo verificado_ine en la base de datos
-                try {
-                    await axios.post('http://192.168.1.71:3000/actualizar_verificado_curp', {
-                        usuarioId: usuario.id,
-                        verificadoCurp: true, // O 1, dependiendo del tipo en tu base de datos
-                    });
-                    // Si la actualización fue exitosa, mostrar una alerta
-                    setShowAlert(false);
-                    Alert.alert('Éxito', 'Verificacion exitosa de la curp.');
-                    navigation.navigate('Inversiones',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
-                } catch (error) {
-                    console.error('Error al actualizar verificado_ine:', error);
-                    Alert.alert('Error', 'No se pudo actualizar el campo verificado_ine. Inténtalo de nuevo más tarde.');
-                }
-            } else {
-                setShowAlert(false);
-                Alert.alert('La CURP no es válida.');
-            }
-        } else {
-            console.log('No se pudo detectar texto en la imagen.');
-            setShowAlert(false);
-        }
-    } catch (error) {
-        console.error("Error al extraer texto:", error);
-        alert("Error al extraer texto de la imagen.");
-        setShowAlert(false);
-    }
-      };
-      const reduceImage = async (photoUri) => {
-        const reducedImage = await ImageManipulator.manipulateAsync(
-          photoUri,
-          [
-            { resize: { width: 1200, height: 900 } },
-            { crop: { originX: 0, originY: 0, width: 600, height: 450 } },
-            { resize: { width: 600 } },
-          ],
-          { base64: true }
-        );
-      
-        console.log("Tamaño de la imagen reducida:", Buffer.byteLength(reducedImage.base64, 'base64'), "píxeles");
-        return `data:image/jpeg;base64,${reducedImage.base64}`;
-      };
+     
      
       const detectTextFromImage = async (imageBase64) => {
         try {
@@ -184,34 +114,9 @@ export default function VerificacionC({ route,onRequestClose  }) {
         }
       };
 
-      const handlellamar = async()=>{
-        extractTextFromImage();
-        subirdocumentos();
-    }
-    const subirdocumentos= async()=>{
-        const formData = new FormData();
-        formData.append("Documento", {
-          uri: photoUri,
-          type: "image/jpeg",
-          name: "profile_image.jpg",
-        });
-        formData.append("id", usuario.id);
-        await axios.post(
-            "http://192.168.1.71:3000/documentos_curp",
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          );
-          
-    }
-
     return (
 
         <View style={styles.container}>
-            <CustomAlert visible={showAlert} message="Verificando..." />
             <View style={styles.header1}>
                 
             <View style={styles.profileInfo}>
@@ -225,7 +130,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.65:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError1(true)} // Manejar error de carga de imagen
@@ -233,7 +138,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
           )}
         <Text style={styles.textHeader1}>{usuario.nombre}</Text>
     </View>
-                {/* Aquí puedes personalizar el contenido del header */}
+               
                 <View style={styles.containermenu}>
                 <TouchableOpacity
   style={styles.menuButton}
@@ -254,42 +159,23 @@ export default function VerificacionC({ route,onRequestClose  }) {
             </View>
 
             <View style={styles.containerdatos}>
-            {hasPermission === null ? (
-    <Text>Solicitando permiso para acceder a la cámara...</Text>
-) : hasPermission === false ? (
-    <Text>No se ha concedido permiso para acceder a la cámara.</Text>
-) : (
-    <View style={{height:670}}>
-        {photoUri ? (
-            <View style={styles.photoContainer}>
-                <Text style={{bottom:30,fontWeight:'bold'}}>Verifica que la CURP se visualice nitidamente</Text>
-                <Image source={{ uri: photoUri }} style={styles.photo} />
-                <TouchableOpacity style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
-                    <Text style={styles.retakeText}>Tomar otra</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.retakeButton1} onPress={handlellamar}>
-                    <Text style={styles.retakeText}>Verificar</Text>
-                </TouchableOpacity>
+            <Text style={styles.title}>Verificación de CURP</Text>
+      <Text style={styles.description}>
+        Por favor, asegúrate de que la imagen de tu CURP sea clara y legible.
+      </Text>
+      <View style={styles.imageContainer}>
+        <Image
+          source={require('../assets/curp.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerificacionC', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados })}>
+        <Text style={styles.buttonText}>Tomar Foto</Text>
+      </TouchableOpacity>
             </View>
-        ) : (
-            <Camera
-                style={{ flex: 1 }}
-                type={Camera.Constants.Type.back}
-                ref={(ref) => setCameraRef(ref)}
-            />
-        )}
-        {!photoUri && <Button title="Tomar Foto" onPress={takePicture} />}
-    </View>
-)}
-            </View>
-            
             <View>
  
-  
-
-  {/* Iterar sobre los afiliados y mostrar su información */}
-  
 </View>
            
             <View style={styles.containernav}>
@@ -302,7 +188,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
                     <Text style={styles.textnavbar2}>Inversiones</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
-                    <Ionicons name="arrow-back" size={30} color="white" />
+                    <Ionicons name="arrow-back" size={30} color="white"/>
                     <Text style={styles.textnavbar2}>Retirar</Text>
                 </TouchableOpacity>
             </View>
@@ -327,21 +213,7 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
         borderRadius: 20,
     },
-    retakeButton: {
-        position: 'absolute',
-        top:400,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        padding: 10,
-        borderRadius: 10,
-    },
-    retakeButton1: {
-        top:50,
-        backgroundColor: '#7192b3',
-        padding: 10,
-        paddingHorizontal:70,
-        width:200,
-        borderRadius: 10,
-    },
+    
     photoContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -575,12 +447,7 @@ const styles = StyleSheet.create({
     menuText: {
         fontSize: 18,
     },
-    menuButton: {
-        position: 'absolute', // Icono de menú con posición absoluta
-        top: 20, // Ajusta la posición superior según sea necesario
-        right: 20, // Ajusta la posición derecha según sea necesario
-        zIndex: 1, // Asegura que el icono esté por encima del resto del contenido
-    },
+   
     // moneyBar: {
     //     backgroundColor: 'white',
     //     borderWidth: 1,
@@ -619,11 +486,7 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 18
     },
-    closeButton: {
-        position: "absolute",
-        top: 20,
-        right: 20,
-    },
+   
     title: {
         fontSize: 24,
         fontWeight: "bold",
@@ -634,27 +497,47 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 20,
     },
-    imageContainer: {
-        borderWidth: 1,
-        borderColor: "#CCCCCC",
-        borderRadius: 10,
-        marginBottom: 20,
-    },
-    image: {
-        width: 200,
-        height: 120,
-        resizeMode: "cover",
-        borderRadius: 10,
-    },
-    uploadButton: {
-        backgroundColor: "#007AFF",
-        paddingVertical: 12,
-        paddingHorizontal: 40,
-        borderRadius: 25,
-    },
+   
+   
     uploadText: {
         color: "#FFFFFF",
         fontSize: 18,
         fontWeight: "bold",
     },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        top:10,
+        marginBottom: 10,
+        textAlign: 'center',
+      },
+      description: {
+        fontSize: 16,
+        marginBottom: 20,
+        top:10,
+        textAlign: 'center',
+      },
+      imageContainer: {
+        borderRadius: 10,
+        overflow: 'hidden',
+        marginBottom: 40,
+        top:20,
+        left:50
+      },
+      image: {
+        width: 300,
+        height: 200,
+      },
+      button: {
+        backgroundColor: '#007bff',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+      },
+      buttonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign:'center'
+      },
 })

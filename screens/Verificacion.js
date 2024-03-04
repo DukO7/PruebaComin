@@ -1,5 +1,5 @@
 import React, { Component, useState,useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button } from "react-native"
+import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button,ActivityIndicator } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
@@ -10,8 +10,10 @@ import * as MediaLibrary from 'expo-media-library';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
+import CustomAlert from './CustomAlert';
 export default function Verificacion({ route,onRequestClose  }) {
     const [hasPermission, setHasPermission] = useState(null);
+    const [loading, setLoading] = useState(false);
   const [cameraRef, setCameraRef] = useState(null);
   const [photoUri, setPhotoUri] = useState(null);
     useEffect(() => {
@@ -26,7 +28,7 @@ export default function Verificacion({ route,onRequestClose  }) {
     }, []);
  
     const [ineImage, setIneImage] = useState(null); // Estado para almacenar la imagen de la INE
-    const [showAlert, setShowAlert] = useState(true); // Estado para controlar la visibilidad del alert
+    const [showAlert, setShowAlert] = useState(false); // Estado para controlar la visibilidad del alert
     const [verified, setVerified] = useState(false); // Estado para verificar si el usuario ha verificado sus datos
 
     const navigation = useNavigation();
@@ -74,26 +76,31 @@ export default function Verificacion({ route,onRequestClose  }) {
     const validateIne = (text) => {
         // Convertir el texto a minúsculas para hacer la búsqueda sin distinción entre mayúsculas y minúsculas
         const lowerCaseText = text.toLowerCase();
-        // Lista de palabras clave a buscar
-        const keywords = ["luis", "fernando", "lechuga", "rendon"];
+      
+        // Obtener el nombre del usuario y dividirlo en palabras clave
+        const keywords = usuario.nombre.toLowerCase().split(' ');
+      
         // Contador para llevar el registro de cuántas palabras clave están presentes en el texto
         let count = 0;
+        console.log('datos separados usuario:',keywords);
         // Verificar cuántas palabras clave están presentes en el texto
         keywords.forEach(keyword => {
           if (lowerCaseText.includes(keyword)) {
             count++;
           }
         });
+      
         // Devolver true si al menos dos palabras clave están presentes
         return count >= 2;
       };
+      
       
       const extractTextFromImage = async () => {
         if (!photoUri) {
           console.log("No se ha tomado ninguna foto.");
           return;
         }
-      
+        setShowAlert(true);
         console.log("Ruta de la imagen:", photoUri);
       
         try {
@@ -107,28 +114,37 @@ export default function Verificacion({ route,onRequestClose  }) {
       
             const isValidIne = validateIne(text);
             console.log("Es INE válida:", isValidIne);
-      
+            
             if (isValidIne) {
+                
                 // Actualizar el campo verificado_ine en la base de datos
+                
                 try {
-                    await axios.post('http://192.168.1.65:3000/actualizar_verificado_ine', {
+                    await axios.post('http://192.168.1.71:3000/actualizar_verificado_ine', {
                         usuarioId: usuario.id,
                         verificadoIne: true, // O 1, dependiendo del tipo en tu base de datos
                     });
+                   
                     // Si la actualización fue exitosa, mostrar una alerta
+                    setShowAlert(false);
                     Alert.alert('Éxito', 'Verificacion exitosa!.');
-                    navigation.navigate('Documentos',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
+                    navigation.navigate('IneyCurp2',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
                 } catch (error) {
                     console.error('Error al actualizar verificado_ine:', error);
                     Alert.alert('Error', 'No se pudo actualizar el campo verificado_ine. Inténtalo de nuevo más tarde.');
+                    setShowAlert(false);
                 }
             } else {
-                alert('La INE no es válida.');
+                setShowAlert(false);
+                alert('Verifica el enfoque de la toma');
             }
         } else {
+            setShowAlert(false);
+            Alert.alert('Verifica el enfoque de la toma');
             console.log('No se pudo detectar texto en la imagen.');
         }
     } catch (error) {
+        setShowAlert(false);
         console.error("Error al extraer texto:", error);
         alert("Error al extraer texto de la imagen.");
     }
@@ -174,9 +190,34 @@ export default function Verificacion({ route,onRequestClose  }) {
         }
       };
 
+const handlellamar = async()=>{
+    extractTextFromImage();
+    subirdocumentos();
+}
+const subirdocumentos= async()=>{
+    const formData = new FormData();
+    formData.append("Documento", {
+      uri: photoUri,
+      type: "image/jpeg",
+      name: "profile_image.jpg",
+    });
+    formData.append("id", usuario.id);
+    await axios.post(
+        "http://192.168.1.71:3000/documentos_ine",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      
+}
+
     return (
 
         <View style={styles.container}>
+            <CustomAlert visible={showAlert} message="Verificando..." />
             <View style={styles.header1}>
                 
             <View style={styles.profileInfo}>
@@ -198,7 +239,7 @@ export default function Verificacion({ route,onRequestClose  }) {
           )}
         <Text style={styles.textHeader1}>{usuario.nombre}</Text>
     </View>
-                {/* Aquí puedes personalizar el contenido del header */}
+               
                 <View style={styles.containermenu}>
                 <TouchableOpacity
   style={styles.menuButton}
@@ -227,14 +268,14 @@ export default function Verificacion({ route,onRequestClose  }) {
     <View style={{height:670}}>
         {photoUri ? (
             <View style={styles.photoContainer}>
-                <Text style={{bottom:30,fontWeight:'bold'}}>Verifica que la INE se visualice nitidamente</Text>
+                <Text style={{bottom:30,fontWeight:'bold'}}>Verifica que la INE (Parte Frontal) se visualice nitidamente</Text>
                 <Image source={{ uri: photoUri }} style={styles.photo} />
                 <TouchableOpacity style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
                     <Text style={styles.retakeText}>Tomar otra</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.retakeButton1} onPress={extractTextFromImage}>
-                    <Text style={styles.retakeText}>Verificar</Text>
+                <TouchableOpacity style={styles.retakeButton1} onPress={handlellamar}>
+                    <Text style={styles.retakeText}>Siguiente</Text>
                 </TouchableOpacity>
             </View>
         ) : (
@@ -304,7 +345,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#7192b3',
         padding: 10,
         paddingHorizontal:70,
-        width:200,
+        width:220,
         borderRadius: 10,
     },
     photoContainer: {

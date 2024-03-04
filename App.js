@@ -19,6 +19,11 @@ LogBox.ignoreLogs(['@firebase/auth:Auth']);
 import { TransitionPresets } from '@react-navigation/stack';
 import Verificacion from './screens/Verificacion';
 import VerificacionC from './screens/VerificacionC';
+import IneyCurp from './screens/IneyCurp';
+import IneyCurp2 from './screens/IneyCurp2';
+import VerificacionR from './screens/VerificacionR';
+import IneyCurp3 from './screens/IneyCurp3';
+import PaymentScreen from './screens/Pago';
 
 export default function App() {
   const Stack =createStackNavigator();
@@ -52,6 +57,16 @@ function MyStack() {
       <Stack.Screen name="Verificacion" component={Verificacion}
       options={{ headerShown: false }}/>
       <Stack.Screen name="VerificacionC" component={VerificacionC}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="VerificacionR" component={VerificacionR}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="IneyCurp" component={IneyCurp}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="IneyCurp2" component={IneyCurp2}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="IneyCurp3" component={IneyCurp3}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen}
       options={{ headerShown: false }}/>
     </Stack.Navigator>
   );

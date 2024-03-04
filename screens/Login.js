@@ -80,7 +80,7 @@ export default function Login(props) {
 
       const handleLogin = async () => {
         try {
-            const response = await axios.post('http://192.168.1.65:3000/login', { correo_electronico: email, password });
+            const response = await axios.post('http://192.168.1.71:3000/login', { correo_electronico: email, password });
             console.log('Respuesta del servidor:', response.data);
             if (response.status === 200 && response.data) {
                 if (response.data.usuario) {
@@ -92,7 +92,7 @@ export default function Login(props) {
                     console.log('datos del token recibidos o guarados', response.data.token);
 
                      // Verificar si el usuario tiene afiliados y actualizar su saldo
-                   const afiliados = await axios.post('http://192.168.1.65:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado});
+                   const afiliados = await axios.post('http://192.168.1.71:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado});
                    console.log('este dato se envia a update',usuario.codigo_afiliado);
                     const affiliateBonus= afiliados.data.affiliateBonus;
                     const datosafiliados = afiliados.data.datosafiliados;
@@ -169,7 +169,7 @@ export default function Login(props) {
         const decoded = token;
         if (decoded) {
           // Si el token es válido, envíalo al servidor
-          const response = await axios.post('http://192.168.1.65:3000/autenticacion-biometrica', { token });
+          const response = await axios.post('http://192.168.1.71:3000/autenticacion-biometrica', { token });
           if (response.status === 200) {
             // Si la autenticación biométrica es exitosa, navega a la pantalla principal
             props.navigation.navigate('Home');

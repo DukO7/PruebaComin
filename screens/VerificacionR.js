@@ -1,5 +1,5 @@
 import React, { Component, useState,useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button } from "react-native"
+import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button,ActivityIndicator } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
@@ -11,9 +11,9 @@ import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import CustomAlert from './CustomAlert';
-import SquareInAppPayments from 'react-native-square-in-app-payments';
-export default function VerificacionC({ route,onRequestClose  }) {
+export default function VerificacionR({ route,onRequestClose  }) {
     const [hasPermission, setHasPermission] = useState(null);
+    const [loading, setLoading] = useState(false);
   const [cameraRef, setCameraRef] = useState(null);
   const [photoUri, setPhotoUri] = useState(null);
     useEffect(() => {
@@ -28,7 +28,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
     }, []);
  
     const [ineImage, setIneImage] = useState(null); // Estado para almacenar la imagen de la INE
-    const [showAlert, setShowAlert] = useState(false);// Estado para controlar la visibilidad del alert
+    const [showAlert, setShowAlert] = useState(false); // Estado para controlar la visibilidad del alert
     const [verified, setVerified] = useState(false); // Estado para verificar si el usuario ha verificado sus datos
 
     const navigation = useNavigation();
@@ -112,35 +112,36 @@ export default function VerificacionC({ route,onRequestClose  }) {
             console.log("Texto extraído:", text);
       
             const isValidIne = validateIne(text);
-            console.log("Es CURP válida:", isValidIne);
+            console.log("Es INE válida:", isValidIne);
       
             if (isValidIne) {
                 // Actualizar el campo verificado_ine en la base de datos
                 try {
-                    await axios.post('http://192.168.1.71:3000/actualizar_verificado_curp', {
+                    await axios.post('http://192.168.1.71:3000/actualizar_verificado_ine', {
                         usuarioId: usuario.id,
-                        verificadoCurp: true, // O 1, dependiendo del tipo en tu base de datos
+                        verificadoIne: true, // O 1, dependiendo del tipo en tu base de datos
                     });
                     // Si la actualización fue exitosa, mostrar una alerta
                     setShowAlert(false);
-                    Alert.alert('Éxito', 'Verificacion exitosa de la curp.');
-                    navigation.navigate('Inversiones',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
+                    Alert.alert('Éxito', 'Verificacion exitosa!.');
+                    navigation.navigate('IneyCurp3',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
                 } catch (error) {
                     console.error('Error al actualizar verificado_ine:', error);
                     Alert.alert('Error', 'No se pudo actualizar el campo verificado_ine. Inténtalo de nuevo más tarde.');
                 }
             } else {
                 setShowAlert(false);
-                Alert.alert('La CURP no es válida.');
+                alert('Verifica el enfoque de la toma');
             }
         } else {
-            console.log('No se pudo detectar texto en la imagen.');
             setShowAlert(false);
+            Alert.alert('Verifica el enfoque de la toma');
+            console.log('No se pudo detectar texto en la imagen.');
         }
     } catch (error) {
+        setShowAlert(false);
         console.error("Error al extraer texto:", error);
         alert("Error al extraer texto de la imagen.");
-        setShowAlert(false);
     }
       };
       const reduceImage = async (photoUri) => {
@@ -197,7 +198,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
         });
         formData.append("id", usuario.id);
         await axios.post(
-            "http://192.168.1.71:3000/documentos_curp",
+            "http://192.168.1.71:3000/documentos_ine",
             formData,
             {
               headers: {
@@ -225,7 +226,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.65:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError1(true)} // Manejar error de carga de imagen
@@ -233,7 +234,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
           )}
         <Text style={styles.textHeader1}>{usuario.nombre}</Text>
     </View>
-                {/* Aquí puedes personalizar el contenido del header */}
+               
                 <View style={styles.containermenu}>
                 <TouchableOpacity
   style={styles.menuButton}
@@ -262,14 +263,14 @@ export default function VerificacionC({ route,onRequestClose  }) {
     <View style={{height:670}}>
         {photoUri ? (
             <View style={styles.photoContainer}>
-                <Text style={{bottom:30,fontWeight:'bold'}}>Verifica que la CURP se visualice nitidamente</Text>
+                <Text style={{bottom:30,fontWeight:'bold'}}>Verifica que la INE (Parte Reversa) se visualice nitidamente</Text>
                 <Image source={{ uri: photoUri }} style={styles.photo} />
                 <TouchableOpacity style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
                     <Text style={styles.retakeText}>Tomar otra</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.retakeButton1} onPress={handlellamar}>
-                    <Text style={styles.retakeText}>Verificar</Text>
+                    <Text style={styles.retakeText}>Siguiente</Text>
                 </TouchableOpacity>
             </View>
         ) : (
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#7192b3',
         padding: 10,
         paddingHorizontal:70,
-        width:200,
+        width:220,
         borderRadius: 10,
     },
     photoContainer: {

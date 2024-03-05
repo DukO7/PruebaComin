@@ -120,7 +120,7 @@ export default function Verificacion({ route,onRequestClose  }) {
                 // Actualizar el campo verificado_ine en la base de datos
                 
                 try {
-                    await axios.post('http://192.168.1.71:3000/actualizar_verificado_ine', {
+                    await axios.post('http://192.168.1.72:3000/actualizar_verificado_ine', {
                         usuarioId: usuario.id,
                         verificadoIne: true, // O 1, dependiendo del tipo en tu base de datos
                     });
@@ -203,7 +203,7 @@ const subirdocumentos= async()=>{
     });
     formData.append("id", usuario.id);
     await axios.post(
-        "http://192.168.1.71:3000/documentos_ine",
+        "http://192.168.1.72:3000/documentos_ine",
         formData,
         {
           headers: {

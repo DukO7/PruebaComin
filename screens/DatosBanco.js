@@ -121,7 +121,7 @@ export default function DatosBanco({ route }) {
 
   const insertarDatosUsuario = async (datosUsuario) => {
     try {
-      const response = await axios.post('http://192.168.1.69:3000/act-datosbanco', datosUsuario);
+      const response = await axios.post('http://192.168.1.72:3000/act-datosbanco', datosUsuario);
       console.log('Respuesta del servidor:', response.data);
       return response.data; // Puedes devolver la respuesta del servidor si es necesario
     } catch (error) {

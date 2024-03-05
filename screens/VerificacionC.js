@@ -3,16 +3,13 @@ import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button } from "re
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
-import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { Buffer } from 'buffer';
-import * as MediaLibrary from 'expo-media-library';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import CustomAlert from './CustomAlert';
-import SquareInAppPayments from 'react-native-square-in-app-payments';
-export default function VerificacionC({ route,onRequestClose  }) {
+export default function VerificacionC({ route  }) {
     const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [photoUri, setPhotoUri] = useState(null);
@@ -117,7 +114,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
             if (isValidIne) {
                 // Actualizar el campo verificado_ine en la base de datos
                 try {
-                    await axios.post('http://192.168.1.71:3000/actualizar_verificado_curp', {
+                    await axios.post('http://192.168.1.72:3000/actualizar_verificado_curp', {
                         usuarioId: usuario.id,
                         verificadoCurp: true, // O 1, dependiendo del tipo en tu base de datos
                     });
@@ -197,7 +194,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
         });
         formData.append("id", usuario.id);
         await axios.post(
-            "http://192.168.1.71:3000/documentos_curp",
+            "http://192.168.1.72:3000/documentos_curp",
             formData,
             {
               headers: {
@@ -225,7 +222,7 @@ export default function VerificacionC({ route,onRequestClose  }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError1(true)} // Manejar error de carga de imagen

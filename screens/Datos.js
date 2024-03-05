@@ -116,7 +116,7 @@ export default function Datos({ route }) {
 
   const insertarDatosUsuario = async (datosUsuario) => {
     try {
-      const response = await axios.post('http://192.168.1.69:3000/act-datos', datosUsuario);
+      const response = await axios.post('http://192.168.1.72:3000/act-datos', datosUsuario);
       console.log('Respuesta del servidor:', response.data);
       return response.data; // Puedes devolver la respuesta del servidor si es necesario
     } catch (error) {
@@ -186,7 +186,7 @@ export default function Datos({ route }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.69:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError(true)} // Manejar error de carga de imagen

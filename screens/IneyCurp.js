@@ -109,7 +109,7 @@ export default function IneyCurp({ route  }) {
             if (isValidIne) {
                 // Actualizar el campo verificado_ine en la base de datos
                 try {
-                    await axios.post('http://192.168.1.65:3000/actualizar_verificado_ine', {
+                    await axios.post('http://192.168.1.72:3000/actualizar_verificado_ine', {
                         usuarioId: usuario.id,
                         verificadoIne: true, // O 1, dependiendo del tipo en tu base de datos
                     });
@@ -189,7 +189,7 @@ export default function IneyCurp({ route  }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.65:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError1(true)} // Manejar error de carga de imagen

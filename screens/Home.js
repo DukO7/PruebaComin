@@ -133,7 +133,7 @@ export default function Home({ route }) {
     formData.append("id", usuario.id);
     try {
       const response = await axios.post(
-        "http://192.168.1.71:3000/upload",
+        "http://192.168.1.72:3000/upload",
         formData,
         {
           headers: {
@@ -213,7 +213,7 @@ export default function Home({ route }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError(true)} // Manejar error de carga de imagen

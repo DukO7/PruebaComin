@@ -24,6 +24,7 @@ export default function Cartera({ route }) {
 
     const navigation = useNavigation();
     const { usuario,affiliateBonus,datosafiliados,inversionesPorFecha,cuentaBancaria} = route.params;
+    console.log('esto estoy recibiendo en cuenta banco:',cuentaBancaria);
     const handlePress = (screenName) => {
         navigation.navigate(screenName);
     };
@@ -48,7 +49,7 @@ export default function Cartera({ route }) {
             
             <Image
               source={{
-                uri: `http://192.168.1.65:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError(true)} 

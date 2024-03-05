@@ -6,6 +6,7 @@ import SidebarModal from "./SidebarModal";
 import axios from 'axios';
 import { openBrowserAsync } from 'expo-web-browser';
 import CustomAlert from './CustomAlert';
+import moment from 'moment';
 export default function Inversiones({ route }) {
     
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,} = route.params;
@@ -96,10 +97,15 @@ export default function Inversiones({ route }) {
                 setShowAlert(true);
                 const payment = await PaymentService.createPayment();
                 console.log(payment.data.init_point);
-                await axios.post('http://192.168.1.71:3000/Act_inversion', {
+                const timestamp = new Date().getTime();
+                const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+                console.log('esta es la fecha que guardara:',timestamp);
+                await axios.post('http://192.168.1.72:3000/Act_inversion', {
                     usuarioId: usuario.id,
                     saldo: textInputValue, 
+                    fecha_inicio:fechaMySQL ,
                 });
+                console.log('insertado con exito');
                 await openBrowserAsync(payment.data.init_point);
                 PaymentService.checkPaymentStatus(payment.data.id);
                 console.log('datos recibidos',payment.data.id)
@@ -115,7 +121,7 @@ export default function Inversiones({ route }) {
         console.log('antes de verificar', usuario.verificado_ine)
         const entero = parseInt(usuario.verificado_ine, 10);
         console.log('antes de segundo', entero)
-        if (entero == 1) {
+        if (entero == 0) {
             alert('Verificación requerida, Para realizar este proceso, primero debe verificar su cuenta.');
             navigation.navigate('IneyCurp', {
                 usuario: usuario,
@@ -169,7 +175,7 @@ export default function Inversiones({ route }) {
                         
                         <Image
                             source={{
-                                uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
                             }}
                             style={styles.profileImage}
                             onError={() => setImageError(true)} 

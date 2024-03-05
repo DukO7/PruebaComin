@@ -45,7 +45,7 @@ export default function Registro(props) {
     };
 
     // Realizar la solicitud HTTP POST al backend
-    axios.post('http://192.168.1.69:3000/registro', data)
+    axios.post('http://192.168.1.72:3000/registro', data)
     .then(response => {
       // Manejar la respuesta del servidor si es necesario
       console.log('Registro exitoso:', response.data);

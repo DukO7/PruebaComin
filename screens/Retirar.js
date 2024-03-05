@@ -5,26 +5,52 @@ import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
 import axios from 'axios';
 import CustomAlert from './CustomAlert';
+import moment from 'moment';
+import differenceInDays from 'date-fns/differenceInDays';
 export default function Retirar({ route }) {
+    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria } = route.params;
     const handleInvertirClick = () => {
-        console.log('antes de verificar', usuario.verificado_ine)
-        const entero = parseInt(usuario.verificado_ine, 10);
-        console.log('antes de segundo', entero)
-        if (entero == 0) {
+        const currentDate = new Date();
+        const userCreationDate = new Date(usuario.fecha_creacion);
+        const daysSinceCreation = differenceInDays(userCreationDate,currentDate);
+        // Verificar si la cuenta está verificada
+        const isAccountVerified = parseInt(usuario.verificado_ine, 10) !== 0;
+    
+        // Obtener la fecha de creación de la cuenta (asumiendo que está en el objeto 'usuario')
+        const accountCreationDate = new Date(usuario.fecha_creacion);
+
+    
+        // Calcular la diferencia en milisegundos entre la fecha actual y la fecha de creación de la cuenta
+        const differenceInMilliseconds = currentDate.getTime() - accountCreationDate.getTime();
+    
+        // Calcular la diferencia en días
+        // const differenceInDays = differenceInMilliseconds / (1000 * 3600 * 24);
+    
+        if (!isAccountVerified) {
+            // Mostrar alerta si la cuenta no está verificada
             Alert.alert(
                 'Verificación requerida',
                 'Para realizar este proceso, primero debe verificar su cuenta.',
                 [
-                    { text: 'OK', onPress: () => navigation.navigate('Documentos', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria }) }
+                    { text: 'OK', onPress: () => navigation.navigate('IneyCurp', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria }) }
                 ]
             );
+        } else if (daysSinceCreation < 3) {
+            // Mostrar alerta si la cuenta tiene menos de 3 días de antigüedad
+            Alert.alert(
+                'Espera requerida',
+                'Para realizar retiros, tu cuenta debe tener al menos 3 días de antigüedad.',
+                [{ text: 'OK' }]
+            );
         } else {
+            // Si la cuenta está verificada y tiene al menos 3 días de antigüedad, proceder con el retiro
             handleRetirar();
         }
     };
+    
     const [showAlert, setShowAlert] = useState(false);
     const navigation = useNavigation();
-    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria } = route.params;
+    
     const drawer = useRef(null);
     const [drawerKey, setDrawerKey] = useState(0);
     const [drawerPosition, setDrawerPosition] = useState('left');
@@ -59,7 +85,7 @@ export default function Retirar({ route }) {
         <View style={[styles.container, styles.navigationContainer]}>
             <View style={styles.profileInfo}>
                 <Image
-                    source={{ uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg` }}
+                    source={{ uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg` }}
                     style={styles.profileImageDraw}
                 />
             </View>
@@ -103,11 +129,15 @@ export default function Retirar({ route }) {
             setShowAlert(true);
             console.log('se procede a retirar: ',amount);
             console.log('se envia saldo total:',usuario.saldo+affiliateBonus);
-            const datos = await axios.post('http://192.168.1.71:3000/Retirar', {
+            const timestamp = new Date().getTime();
+            const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+            const datos = await axios.post('http://192.168.1.72:3000/Retirar', {
                 usuarioId: usuario.id,
                 saldo: amount, 
-                saldototal:usuario.saldo+affiliateBonus
+                saldototal:usuario.saldo+affiliateBonus,
+                fecha_inicio:fechaMySQL ,
             });
+            
             console.log('fue un exito',datos.data.alerta);
             if(datos.data.alerta==1){
                 setShowAlert(false);
@@ -138,7 +168,7 @@ export default function Retirar({ route }) {
                             // Intenta cargar la imagen
                             <Image
                                 source={{
-                                    uri: `http://192.168.1.71:3000/uploads/${usuario.id}.jpg`,
+                                    uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
                                 }}
                                 style={styles.profileImage}
                                 onError={() => setImageError(true)} // Manejar error de carga de imagen

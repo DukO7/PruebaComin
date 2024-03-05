@@ -410,7 +410,6 @@ app.post('/update-balance', (req, res) => {
 
             // Si no hay datos de cuenta, asignar un valor predeterminado para nombre_cuenta
             const cuenta = resultsCuenta.length > 0 ? resultsCuenta[0] : { nombre_cuenta: 'sin nombre' };
-
             const querybank = `
               SELECT id, id_usuario, cantidad, descripcion, fecha_inicio
               FROM inversiones
@@ -451,11 +450,50 @@ app.post('/update-balance', (req, res) => {
       });
     } else {
       // Si no hay afiliados, devolver un objeto cuenta con nombre_cuenta predeterminado
-      const cuenta = { nombre_cuenta: 'sin nombre' };
+      const querybank = `
+              SELECT id, id_usuario, cantidad, descripcion, fecha_inicio
+              FROM inversiones
+              WHERE id_usuario = ?
+              ORDER BY fecha_inicio DESC
+            `;
+      const queryCuenta = `SELECT * FROM cuentas_bancarias WHERE id_usuario = ?`;
+      connection.query(queryCuenta, [usuarioId], (error, resultsCuenta) => {
+        if (error) {
+          console.error('Error al obtener los datos de la cuenta bancaria:', error);
+          res.status(500).json({ error: 'Error interno del servidor' });
+          return;
+        }
+        connection.query(querybank, [usuarioId], (err, results1) => {
+          if (err) {
+            console.error('Error al obtener las inversiones:', err);
+            res.status(500).json({ error: 'Error interno del servidor' });
+            return;
+          }
+
+          // Objeto para almacenar las inversiones por fecha
+          const inversionesPorFecha = {};
+
+          // Procesar cada inversión y organizarlas por fecha
+          results1.forEach(inversion => {
+            const fecha = inversion.fecha_inicio.toISOString().split('T')[0];
+
+            if (!inversionesPorFecha[fecha]) {
+              inversionesPorFecha[fecha] = [];
+            }
+
+            inversionesPorFecha[fecha].push(inversion);
+          });
+        
+        console.log('Resultados de la consulta SQL:', inversionesPorFecha);
+        console.log('estos son los datos bancarios:', resultsCuenta);
+
+        // Si no hay datos de cuenta, asignar un valor predeterminado para nombre_cuenta
+      const cuenta = resultsCuenta.length > 0 ? resultsCuenta[0] : { nombre_cuenta: 'sin nombre' };
       const datosafiliados =[];
       const affiliateBonus=0;
-      const inversionesPorFecha=[];
       res.status(200).json({ message: 'No hay afiliados', datosafiliados, cuenta, affiliateBonus,inversionesPorFecha });
+      });
+    });
     }
   });
 });
@@ -519,29 +557,31 @@ app.post("/actualizar_verificado_curp", (req, res) => {
 
 
 app.post("/Act_inversion", (req, res) => {
-  const { usuarioId, saldo } = req.body;
+  const { usuarioId, saldo,fecha_inicio } = req.body;
 
   // Query para actualizar los datos en la base de datos
   const query = `UPDATE usuarios SET saldo=saldo+? WHERE id=?`;
-
+  const query1 =`INSERT INTO inversiones (id_usuario, cantidad, descripcion, fecha_inicio) VALUES (?, ?, ?, ?)`;
   // Ejecutar la consulta
   connection.query(query, [saldo, usuarioId], (error, results) => {
     if (error) {
+      
       console.error("Error al actualizar datos del usuario:", error);
       res.status(500).json({ error: "Error interno del servidor" });
       return;
     }
+    connection.query(query1,[usuarioId,saldo,'Transferencia SPEI',fecha_inicio])
     console.log("Datos del usuario verificacion curp exitoso:", results);
     res.status(200).json({ message: "Datos del usuario actualizados correctamente" });
   });
 });
 
 app.post("/Retirar", (req, res) => {
-  const { usuarioId, saldo,saldototal } = req.body;
+  const { usuarioId, saldo,saldototal,fecha_inicio } = req.body;
    
   if(saldototal>=saldo){
     const query = `UPDATE usuarios SET saldo=saldo-? WHERE id=?`;
-
+    const query1 =`INSERT INTO inversiones (id_usuario, cantidad, descripcion, fecha_inicio) VALUES (?, ?, ?, ?)`;
     // Ejecutar la consulta
     connection.query(query, [saldo, usuarioId,saldo], (error, results) => {
       if (error) {
@@ -550,6 +590,7 @@ app.post("/Retirar", (req, res) => {
         return;
       }
       const alerta = 1;
+      connection.query(query1,[usuarioId,saldo,'Retiro de cuenta',fecha_inicio])
       console.log("Datos del usuario verificacion curp exitoso:", results);
       res.status(200).json({ message: "Datos del usuario actualizados correctamente",alerta});
     });

@@ -48,7 +48,7 @@ const SidebarModal = ({ isVisible, onClose, onPress,usuario }) => {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.65:3000/uploads/${usuario.id}.jpg`,
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImageDraw}
               onError={() => setImageError(true)} // Manejar error de carga de imagen

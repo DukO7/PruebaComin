@@ -12,7 +12,8 @@ export default function Retirar({ route }) {
     const handleInvertirClick = () => {
         const currentDate = new Date();
         const userCreationDate = new Date(usuario.fecha_creacion);
-        const daysSinceCreation = differenceInDays(userCreationDate,currentDate);
+        const daysSinceCreation = differenceInDays(currentDate, userCreationDate);
+        console.log('este es el dia',daysSinceCreation);
         // Verificar si la cuenta está verificada
         const isAccountVerified = parseInt(usuario.verificado_ine, 10) !== 0;
     

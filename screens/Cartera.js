@@ -1,13 +1,43 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Text, StyleSheet, View, Image, TouchableOpacity,FlatList  } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import CreditCardImage from '../assets/tarjeta.png'
 import SidebarModal from "./SidebarModal";
 export default function Cartera({ route }) {
-    
+    const [dates, setDates] = useState([]);
+const [inversions, setInversions] = useState([]);
+    useEffect(() => {
+        const filteredDates = Object.keys(inversionesPorFecha);
+        setDates(filteredDates);
+        if (showDeposits) {
+          const filteredInversions = [];
+          filteredDates.forEach(date => {
+            const inversionsForDate = inversionesPorFecha[date];
+            const filteredInversionsForDate = inversionsForDate.filter(inversion => inversion.descripcion.includes('transferencia SPEI'));
+            filteredInversions.push(...filteredInversionsForDate);
+          });
+          setInversions(filteredInversions);
+        } else {
+          const filteredInversions = [];
+          filteredDates.forEach(date => {
+            const inversionsForDate = inversionesPorFecha[date];
+            const filteredInversionsForDate = inversionsForDate.filter(inversion => inversion.descripcion.includes('Retiro de cuenta'));
+            filteredInversions.push(...filteredInversionsForDate);
+          });
+          setInversions(filteredInversions);
+        }
+      }, [showDeposits, inversionesPorFecha]);
     const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
-
+    const inversionsByDate = {};
+inversions.forEach(inversion => {
+  const date = new Date(inversion.fecha_creacion).toISOString().split('T')[0];
+  if (!inversionsByDate[date]) {
+    inversionsByDate[date] = [];
+  }
+  inversionsByDate[date].push(inversion);
+});
+    const uniqueDates = Object.keys(inversionsByDate);
     const openModal = () => {
       setIsModalVisible(true);
     };
@@ -34,6 +64,7 @@ export default function Cartera({ route }) {
     const toggleMenu = () => {
         setShowMenu(!showMenu);
     };
+    const [showDeposits, setShowDeposits] = useState(true);
     const [imageError, setImageError] = useState(false);
     return (
         <View style={styles.container}>
@@ -99,40 +130,50 @@ export default function Cartera({ route }) {
 
             </View>
             <View style={styles.profileInfo}>
-                <View style={styles.archivo}>
-                    <Text style={{ color: 'white', marginLeft: 20, fontWeight: 'bold', }}>Depositos</Text>
+  <View style={styles.archivo} onTouchEnd={() => setShowDeposits(true)}>
+    <Text style={{ color: 'white', marginLeft: 20, fontWeight: 'bold', }}>Depositos</Text>
+  </View>
+  <View style={styles.archivo1} onTouchEnd={() => setShowDeposits(false)}>
+    <Text style={{ color: 'black', marginLeft: 30, fontWeight: 'bold', }}>Retiros</Text>
+  </View>
+</View>
+<FlatList
+  data={Object.entries(inversionesPorFecha)} // Convertimos el objeto a un array de pares clave-valor
+  extraData={showDeposits} // Pasamos 'showDeposits' como información adicional
+  renderItem={({ item }) => {
+    const filteredInversions = showDeposits
+      ? item[1].filter(inversion => inversion.descripcion.includes('Transferencia SPEI'))
+      : item[1].filter(inversion => inversion.descripcion.includes('Retiro de cuenta'));
 
-                </View>
-                <View style={styles.archivo1}>
-                    <Text style={{ color: 'black', marginLeft: 30, fontWeight: 'bold', }}>Retiros</Text>
-
-                </View>
-            </View>
-            <FlatList
-        data={Object.entries(inversionesPorFecha)} // Convertimos el objeto a un array de pares clave-valor
-        renderItem={({ item }) => (
-          <View >
-            <View style={styles.containerDivider}>
-            <View style={styles.textDivider}>
-            <Text>{item[0]}</Text>
+    return (
+      <View >
+        <FlatList
+          data={uniqueDates} // Filtramos las inversiones según el valor de 'showDeposits'
+          renderItem={({ item }) => (
+        <View style={styles.containerDivider}>
+          <View style={styles.textDivider}>
+            <Text>{item}</Text>
             <View style={styles.divider} />
-            </View>
-            </View>
-            <FlatList
-              data={item[1]} // Las inversiones para esta fecha
-              renderItem={({ item: inversion }) => (
-                <View style={styles.containerdatos}>
-                  <Text style={styles.textContainer}>{inversion.descripcion}</Text>
-                  <Text style={styles.textDerecha}>${inversion.cantidad}</Text>
-                  
-                </View>
-              )}
-              keyExtractor={inversion => inversion.id.toString()} // Clave única para cada elemento
-            />
           </View>
+        </View>
         )}
-        keyExtractor={(item, index) => index.toString()} // Clave única para cada elemento
+        keyExtractor={item => item} // Clave única para cada elemento
       />
+        <FlatList
+          data={filteredInversions} // Filtramos las inversiones según el valor de 'showDeposits'
+          renderItem={({ item: inversion }) => (
+            <View style={styles.containerdatos}>
+              <Text style={styles.textContainer}>{inversion.descripcion}</Text>
+              <Text style={styles.textDerecha}>${inversion.cantidad}</Text>
+            </View>
+          )}
+          keyExtractor={inversion => inversion.id.toString()} // Clave única para cada elemento
+        />
+      </View>
+    )
+  }}
+  keyExtractor={(item, index) => index.toString()} // Clave única para cada elemento
+/>
        <View style={styles.containernav}>
                 <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })}>
                     <Ionicons name="wallet" size={30} color="#7494b3" />

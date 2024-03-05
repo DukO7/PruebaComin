@@ -9,33 +9,27 @@ CREATE TABLE IF NOT EXISTS Usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100),
     correo_electronico VARCHAR(255) UNIQUE,
-    contrasena VARCHAR(255),
+    password VARCHAR(255),
     telefono VARCHAR(15),
     direccion VARCHAR(255),
-    numero_afiliado INT,
-    numero_afiliado_referente INT,
+    codigo_afiliado VARCHAR(255),
+    numero_afiliado_referente VARCHAR(11),
     saldo DECIMAL(10, 2),
-    foto_usuario VARCHAR(255) -- Ruta de la imagen del usuario
+    foto_usuario LONGBLOB,
+    verificado_ine VARCHAR(255),
+    verificado_curp VARCHAR(255),
+    fecha_creacion TIMESTAMP
+
+
 );
 
 -- Crear la tabla de Transacciones
-CREATE TABLE IF NOT EXISTS Transacciones (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT,
-    cantidad DECIMAL(10, 2),
-    tipo ENUM('ingreso', 'egreso'),
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id)
-);
-
--- Crear la tabla de Inversiones
 CREATE TABLE IF NOT EXISTS Inversiones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT,
     cantidad DECIMAL(10, 2),
     descripcion VARCHAR(255),
     fecha_inicio TIMESTAMP,
-    fecha_final TIMESTAMP,
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id)
 );
 
@@ -46,6 +40,9 @@ CREATE TABLE IF NOT EXISTS Cuentas_Bancarias (
     tipo_cuenta VARCHAR(50),
     numero_cuenta VARCHAR(50),
     banco VARCHAR(100),
-    saldo DECIMAL(10, 2),
+    saldo_afiliados DECIMAL(10, 2),
+    titular_cuenta VARCHAR(100),
+    numero_cuenta VARCHAR(100),
+    nombre_cuenta
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id)
 );

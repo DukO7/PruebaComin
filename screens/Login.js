@@ -85,24 +85,30 @@ export default function Login(props) {
             if (response.status === 200 && response.data) {
                 if (response.data.usuario) {
                     const usuario = response.data.usuario;
-                    
-                    await saveToken(response.data.token); // Guardar el token en AsyncStorage
-                    await AsyncStorage.setItem("usuario", JSON.stringify(usuario));
-                    console.log('datos recibidos de handleLogin', JSON.stringify(usuario));
-                    console.log('datos del token recibidos o guarados', response.data.token);
-
-                     // Verificar si el usuario tiene afiliados y actualizar su saldo
-                   const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado});
-                   console.log('este dato se envia a update',usuario.codigo_afiliado);
-                    const affiliateBonus= afiliados.data.affiliateBonus;
-                    const datosafiliados = afiliados.data.datosafiliados;
-                    const inversionesPorFecha= afiliados.data.inversionesPorFecha;
-                    const cuentaBancaria=afiliados.data.cuenta;
-                    console.log('son datos de banco:',cuentaBancaria);
-                    console.log('este es el usuario que se manda:',usuario.id);
-                    console.log('Inversiones por fecha:',inversionesPorFecha);
-                    console.log('este es el que se envia de los afiliados:',affiliateBonus,datosafiliados);
-                    await login(usuario,affiliateBonus,datosafiliados,inversionesPorFecha,cuentaBancaria);
+                    console.log('esto recibo de verificado',usuario.correoElectronicoVerificado)
+                    if (usuario.correoElectronicoVerificado == 0) {
+                        Alert.alert('Error', 'Tu correo electrónico aún no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.');
+                        return; // Detener el proceso de inicio de sesión
+                    }else{
+                        await saveToken(response.data.token); // Guardar el token en AsyncStorage
+                        await AsyncStorage.setItem("usuario", JSON.stringify(usuario));
+                        console.log('datos recibidos de handleLogin', JSON.stringify(usuario));
+                        console.log('datos del token recibidos o guarados', response.data.token);
+        
+                        // Verificar si el usuario tiene afiliados y actualizar su saldo
+                        const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado});
+                        console.log('este dato se envia a update',usuario.codigo_afiliado);
+                        const affiliateBonus= afiliados.data.affiliateBonus;
+                        const datosafiliados = afiliados.data.datosafiliados;
+                        const inversionesPorFecha= afiliados.data.inversionesPorFecha;
+                        const cuentaBancaria=afiliados.data.cuenta;
+                        console.log('son datos de banco:',cuentaBancaria);
+                        console.log('este es el usuario que se manda:',usuario.id);
+                        console.log('Inversiones por fecha:',inversionesPorFecha);
+                        console.log('este es el que se envia de los afiliados:',affiliateBonus,datosafiliados);
+                        await login(usuario,affiliateBonus,datosafiliados,inversionesPorFecha,cuentaBancaria);
+                    }
+    
                    
                 } else {
                     Alert.alert('Error', 'No se recibieron los datos del usuario');
@@ -115,6 +121,7 @@ export default function Login(props) {
             Alert.alert('Error', 'Error al iniciar sesión');
         }
     };
+    
 
     const login = async (usuario,affiliateBonus,datosafiliados,inversionesPorFecha,cuentaBancaria) => {
         try {

@@ -8,6 +8,7 @@ const fs = require('fs');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const Mercadopago = require('mercadopago');
+const nodemailer = require('nodemailer');
 // Configurar la conexión a la base de datos MySQL
 const connection = mysql.createConnection({
   host: 'localhost', // La dirección del servidor MySQL
@@ -211,6 +212,7 @@ app.post('/registro', (req, res) => {
           }
 
           const userId = userIdResults[0].id;
+          
 
           // Insertar datos predeterminados en la tabla cuentas_bancarias
           const insertCuentaQuery = `
@@ -747,6 +749,182 @@ app.use("/", indexRouter);
 //     });
 // });
 
+// servicio correo
+
+app.post('/sendVerificationEmail', (req, res) => {
+  const { userEmail } = req.body;
+  const selectUserIdQuery = 'SELECT id FROM usuarios WHERE correo_electronico = ?';
+        connection.query(selectUserIdQuery, [userEmail], (err, userIdResults) => {
+          if (err) {
+            console.error('Error al buscar el ID del usuario:', err);
+            res.status(500).json({ error: 'Error interno del servidor al buscar el ID del usuario' });
+            return;
+          }
+          const userId = userIdResults[0].id;
+          const usertoken= jwt.sign({ userId }, 'secreto', { expiresIn: '1d' });
+          const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'lechuga.lflr@gmail.com',
+      pass: 'adtx cfpz ggsc qcre'
+    }
+  });
+  
+  connection.query('UPDATE usuarios SET verificacionToken = ? WHERE id = ?', [usertoken, userId], (error, results, fields) => {
+    if (error) {
+      console.error('Error al guardar el token de verificación:', error);
+    } else {
+      console.log('Token de verificación guardado correctamente');
+    }
+
+   // Corregido aquí
+    const mailOptions = {
+      from: 'lechuga.lflr@gmail.com',
+      to: userEmail,
+      subject: 'Verificación de correo electrónico',
+      html: `<!DOCTYPE html>
+      <html lang="es">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Verificación de correo electrónico</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background-color: #1d2027;
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  height: 100vh;
+              }
+              .container {
+                  text-align: center;
+                  padding: 20px;
+                  background-color: #fff;
+                  border-radius: 10px;
+                  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              h1 {
+                  color: #4CAF50;
+                  margin-bottom: 20px;
+              }
+              p {
+                  color: #333;
+                  margin-bottom: 20px;
+              }
+              a {
+                  display: inline-block;
+                  padding: 10px 20px;
+                  background-color: #4CAF50;
+                  color: #fff;
+                  text-decoration: none;
+                  border-radius: 5px;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h1>Verificación de correo electrónico</h1>
+              <p>Hola,</p>
+              <p>Por favor, haz clic en el siguiente enlace para verificar tu dirección de correo electrónico:</p>
+              <a href="http://192.168.1.72:3000/verify?token=${usertoken}">Verificar correo electrónico</a>
+          </div>
+      </body>
+      </html>
+      `
+    };
+  
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error al enviar el correo electrónico:', error);
+        res.status(500).send('Error al enviar el correo electrónico de verificación');
+      } else {
+        console.log('Correo electrónico enviado:', info.response);
+        res.status(200).send('Correo electrónico de verificación enviado correctamente');
+      }
+    });
+  });
+  });
+});
+
+app.get('/verify', async (req, res) => {
+  const token = req.query.token;
+
+  try {
+      const decoded = jwt.verify(token, 'secreto'); // Verifica el token
+      const userId = decoded.userId;
+
+      // Actualiza el estado del correo electrónico del usuario como verificado
+      connection.query('UPDATE usuarios SET correoElectronicoVerificado = 1 WHERE id = ?', [userId], (error, results, fields) => {
+        if (error) {
+          console.error('Error al actualizar el estado del correo electrónico del usuario:', error);
+          res.status(500).send('Error al actualizar el estado del correo electrónico del usuario');
+        } else {
+          console.log('Estado del correo electrónico del usuario actualizado correctamente');
+          const htmlResponse = `
+          <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de correo electrónico</title>
+     <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1d2027;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        img {
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container animate__animated animate__rubberBand">
+        <h1>¡Correo electrónico verificado!</h1>
+        <p>La verificación de correo electrónico se completó correctamente.</p>
+        <img src="https://cdn-icons-png.flaticon.com/512/7184/7184066.png" alt="Verificado" width="100" height="100">
+    </div>
+</body>
+</html>
+
+            `;
+            
+            res.send(htmlResponse);
+        }
+      });
+  } catch (error) {
+      console.error('Error al verificar el token:', error);
+      res.status(400).send('Token de verificación inválido o expirado');
+  }
+});
 
 // Escuchar en el puerto 3000
 app.listen(3000, () => {

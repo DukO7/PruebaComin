@@ -49,6 +49,7 @@ export default function Registro(props) {
     .then(response => {
       // Manejar la respuesta del servidor si es necesario
       console.log('Registro exitoso:', response.data);
+      enviarCorreoDeVerificacion(correo_electronico);
       Alert.alert('Registro exitoso', '¡Tu registro ha sido exitoso!', [{ text: 'OK', onPress: () => navigation.navigate('Login') }]);
     })
     .catch(error => {
@@ -70,6 +71,29 @@ export default function Registro(props) {
     setIsVisible(true);
   };
 
+  const enviarCorreoDeVerificacion = async (correo_electronico) => {
+    const url = 'http://192.168.1.72:3000/sendVerificationEmail'; // Reemplaza esto con la URL de tu servidor
+  
+    const requestBody = {
+      userEmail: correo_electronico, // Correo electrónico del usuario
+       // Enlace de verificación generado por tu backend
+    };
+  
+    try {
+      const response = await axios.post(url, requestBody);
+  
+      if (response.status === 200) {
+        console.log('Correo electrónico de verificación enviado correctamente');
+        // Realizar cualquier acción adicional después de enviar el correo electrónico
+      } else {
+        console.error('Error al enviar el correo electrónico de verificación:', response.statusText);
+        // Manejar el error de alguna manera
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+      // Manejar el error de red de alguna manera
+    }
+  };
   return (
     <View style={styles.container}>
       <Text style={styles.title}>REGISTRARSE</Text>

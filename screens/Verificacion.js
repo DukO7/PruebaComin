@@ -1,17 +1,15 @@
 import React, { Component, useState,useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button,ActivityIndicator } from "react-native"
+import { Text, StyleSheet, View, Image, TouchableOpacity,Alert,Button } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
-import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { Buffer } from 'buffer';
-import * as MediaLibrary from 'expo-media-library';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import CustomAlert from './CustomAlert';
-export default function Verificacion({ route,onRequestClose  }) {
+export default function Verificacion({ route}) {
     const [hasPermission, setHasPermission] = useState(null);
     const [loading, setLoading] = useState(false);
   const [cameraRef, setCameraRef] = useState(null);
@@ -41,7 +39,6 @@ export default function Verificacion({ route,onRequestClose  }) {
     const toggleMenu = () => {
         setShowMenu(!showMenu);
     };
-    const [imageError, setImageError] = useState(false);
     const [imageError1, setImageError1] = useState(false);
 
     const [imageErrorss, setImageErrorss] = useState(Array(datosafiliados.length).fill(false));
@@ -128,7 +125,7 @@ export default function Verificacion({ route,onRequestClose  }) {
                     // Si la actualización fue exitosa, mostrar una alerta
                     setShowAlert(false);
                     Alert.alert('Éxito', 'Verificacion exitosa!.');
-                    navigation.navigate('IneyCurp2',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
+                    navigation.navigate('IneyCurp2',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria });
                 } catch (error) {
                     console.error('Error al actualizar verificado_ine:', error);
                     Alert.alert('Error', 'No se pudo actualizar el campo verificado_ine. Inténtalo de nuevo más tarde.');

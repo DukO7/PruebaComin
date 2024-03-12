@@ -28,7 +28,7 @@ export default function IneyCurp3({ route  }) {
     const [verified, setVerified] = useState(false); // Estado para verificar si el usuario ha verificado sus datos
 
     const navigation = useNavigation();
-    const { usuario, affiliateBonus,datosafiliados } = route.params;
+    const { usuario, affiliateBonus,datosafiliados,cuentaBancaria } = route.params;
     const handlePress = (screenName) => {
         navigation.navigate(screenName);
     };
@@ -59,7 +59,7 @@ export default function IneyCurp3({ route  }) {
       const handlePress1 = (screen) => {
         console.log("Navigating to", screen);
         closeModal();
-         navigation.navigate(screen, { usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
+         navigation.navigate(screen, { usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria });
       };
       const takePicture = async () => {
         if (cameraRef) {
@@ -170,7 +170,7 @@ export default function IneyCurp3({ route  }) {
           resizeMode="contain"
         />
       </View>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerificacionC', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados })}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerificacionC', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliado,cuentaBancaria: cuentaBancaria })}>
         <Text style={styles.buttonText}>Tomar Foto</Text>
       </TouchableOpacity>
             </View>
@@ -179,15 +179,15 @@ export default function IneyCurp3({ route  }) {
 </View>
            
             <View style={styles.containernav}>
-                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
+                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="wallet" size={30} color="white" />
                     <Text style={styles.textnavbar}>Cartera</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
+                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="analytics" size={30} color="white" />
                     <Text style={styles.textnavbar2}>Inversiones</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
+                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="arrow-back" size={30} color="white"/>
                     <Text style={styles.textnavbar2}>Retirar</Text>
                 </TouchableOpacity>

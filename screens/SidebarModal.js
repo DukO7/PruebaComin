@@ -73,8 +73,8 @@ const SidebarModal = ({ isVisible, onClose, onPress,usuario }) => {
       <TouchableOpacity style={styles.item} onPress={() => onPress("Afiliados")}>
         <Text style={styles.menuText}>Afiliados</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.item} onPress={() => onPress("Configuracion")}>
-        <Text style={styles.menuText}>Configuraciones</Text>
+      <TouchableOpacity style={styles.item} onPress={() => onPress("Login")}>
+        <Text style={styles.menuText}>Salir</Text>
       </TouchableOpacity>
     </Animated.View>
   );

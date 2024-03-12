@@ -36,61 +36,100 @@ export default function Inversiones({ route }) {
     const [textInputValue, setTextInputValue] = useState("");
     
     const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
-    const PaymentService = {
-        async createPayment() {
-            const url = "https://api.mercadopago.com/checkout/preferences";
+    // const PaymentService = {
+    //     async createPayment() {
+    //         const url = "https://api.mercadopago.com/checkout/preferences";
 
-            const body = {
-                payer_email: usuario.correo_electronico,
-                items: [
-                    {
-                        title: "Inversion",
-                        description: "Inversion Fintech",
-                        picture_url: "http://www.myapp.com/myimage.jpg",
-                        category_id: "services",
-                        quantity: 1,
-                        unit_price: parseFloat(textInputValue)
-                    }
-                ],
-                back_urls: {
-                    failure: "/failure",
-                    pending: "/pending",
-                    success: "http://localhost:8081/Inversiones"
-                }
-            };
+    //         const body = {
+    //             payer_email: usuario.correo_electronico,
+    //             items: [
+    //                 {
+    //                     title: "Inversion",
+    //                     description: "Inversion Fintech",
+    //                     picture_url: "http://www.myapp.com/myimage.jpg",
+    //                     category_id: "services",
+    //                     quantity: 1,
+    //                     unit_price: parseFloat(textInputValue)
+    //                 }
+    //             ],
+    //             back_urls: {
+    //                 failure: "/failure",
+    //                 pending: "/pending",
+    //                 success: "http://localhost:8081/Inversiones"
+    //             }
+    //         };
 
-            const payment = await axios.post(url, body, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
-                }
-            });
+    //         const payment = await axios.post(url, body, {
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //                 Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
+    //             }
+    //         });
 
-            return payment;
-        },
-        checkPaymentStatus(preferenceId) {
-            const url = `https://api.mercadopago.com/checkout/preferences/${preferenceId}`;
+    //         return payment;
+    //     },
+    //     checkPaymentStatus(preferenceId) {
+    //         const url = `https://api.mercadopago.com/checkout/preferences/${preferenceId}`;
         
-            axios.get(url, {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
-              }
-            }).then((response) => {
-              const { status } = response.data;
+    //         axios.get(url, {
+    //           headers: {
+    //             "Content-Type": "application/json",
+    //             Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
+    //           }
+    //         }).then((response) => {
+    //           const { status } = response.data;
         
-              if (status === 'approved') {
-                console.log('El pago fue exitoso.');
-              } else if (status === 'pending') {
-                console.log('El pago está pendiente.');
-              } else if (status === 'rejected') {
-                console.log('El pago fue rechazado.');
-              }
-            }).catch((error) => {
-              console.error(error);
-            });
-          }
-    };
+    //           if (status === 'approved') {
+    //             console.log('El pago fue exitoso.');
+    //           } else if (status === 'pending') {
+    //             console.log('El pago está pendiente.');
+    //           } else if (status === 'rejected') {
+    //             console.log('El pago fue rechazado.');
+    //           }
+    //         }).catch((error) => {
+    //           console.error(error);
+    //         });
+    //       }
+    // };
+
+
+    
+// const CoinbaseWalletSDK = require('@coinbase/wallet-sdk');
+// const fromAddress='35rESwPXsvdS7MS8nZsUPWQPdvsk6ZifzT';
+// const toAddress='35rESwPXsvdS7MS8nZsUPWQPdvsk6ZifzT';
+// const amount='100';
+// const currency='MXN';
+// const client = new CoinbaseWalletSDK.Client({
+//   apiKey: 'CxrVfc5bLoldXnLS',
+//   apiSecret: 'tmH3WdF8kgRDGfdMXQHfKSwBLWM2upMv'
+// });
+
+// const createTransaction = async (req, res) => {
+//   try {
+//     const { fromAddress, toAddress, amount, currency } = req.body;
+
+//     // Crear una nueva transacción
+//     const transaction = await client.paymentMethods.send({
+//       paymentMethodId: fromAddress,
+//       amount: {
+//         amount: parseFloat(amount).toString(),
+//         currency
+//       },
+//       to: toAddress,
+//       description: 'Depósito con criptomonedas'
+//     });
+
+//     // Verificar que la transacción se haya creado correctamente
+//     if (transaction.id) {
+//       res.status(201).json({ message: 'Transacción creada exitosamente', transaction });
+//     } else {
+//       res.status(400).json({ error: 'Error al crear la transacción' });
+//     }
+//   } catch (error) {
+//     console.error('Error al crear la transacción:', error);
+//     res.status(500).json({ error: 'Error interno del servidor' });
+//   }
+// };
     const handlePress3 = async () => {
         try {
             if(textInputValue){
@@ -131,8 +170,13 @@ export default function Inversiones({ route }) {
                 cuentaBancaria: cuentaBancaria,
             });
         } else {
-            handlePress3();
-        }
+            if(textInputValue){
+                navigation.navigate('Pasarela', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria,textInputValue:textInputValue });
+            }else{
+                Alert.alert('Para continuar por favor introduce monto a invertir');
+            }
+            
+           }
     };
     const openModal = () => {
         setIsModalVisible(true);
@@ -159,10 +203,13 @@ export default function Inversiones({ route }) {
         setShowMenu(!showMenu);
     };
     const [imageError, setImageError] = useState(false);
+
+    
     return (
 
         <View style={styles.container}>
             <View style={styles.header1}>
+            
             <CustomAlert visible={showAlert} message="Redirigiendo..." />
                 <View style={styles.profileInfo}>
                     {imageError ? (

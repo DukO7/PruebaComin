@@ -24,7 +24,8 @@ import IneyCurp2 from './screens/IneyCurp2';
 import VerificacionR from './screens/VerificacionR';
 import IneyCurp3 from './screens/IneyCurp3';
 import PaymentScreen from './screens/Pago';
-
+import Pasarela from './screens/Pasarela';
+import Spei2 from './screens/Spei2';
 export default function App() {
   const Stack =createStackNavigator();
   const Tab= createBottomTabNavigator();
@@ -67,6 +68,10 @@ function MyStack() {
       <Stack.Screen name="IneyCurp3" component={IneyCurp3}
       options={{ headerShown: false }}/>
       <Stack.Screen name="PaymentScreen" component={PaymentScreen}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="Pasarela" component={Pasarela}
+      options={{ headerShown: false }}/>
+      <Stack.Screen name="Spei2" component={Spei2}
       options={{ headerShown: false }}/>
     </Stack.Navigator>
   );

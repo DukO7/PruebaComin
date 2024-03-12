@@ -7,8 +7,12 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const Mercadopago = require('mercadopago');
+const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
+const salt = bcrypt.genSaltSync(10);
+const stripe = require('stripe')('sk_test_51OqKITGl1997KuzQMJdP0omwI7Xrk1X672ueUpm1ncFQVD0GJ9tAWLbyLB6Ydt8wppyb1LaH6BQb3zz2rAVkhMyc00aw7M0F2O');
+
+
 // Configurar la conexión a la base de datos MySQL
 const connection = mysql.createConnection({
   host: 'localhost', // La dirección del servidor MySQL
@@ -192,16 +196,22 @@ app.post('/registro', (req, res) => {
         res.status(400).json({ error: 'El código de afiliado ya está registrado el máximo de veces permitido' });
         return;
       }
-
+      bcrypt.hash(password, salt, (err, hashedPassword) => {
+        if (err) {
+          console.error('Error al hashear la contraseña:', err);
+          res.status(500).json({ error: 'Error interno del servidor para hashear la contraseña' });
+          return;
+        }
+      
       // Insertar el nuevo usuario en la base de datos
       const insertQuery = 'INSERT INTO usuarios (nombre, telefono, correo_electronico, password, codigo_afiliado, numero_afiliado_referente) VALUES (?, ?, ?, ?, ?, ?)';
-      connection.query(insertQuery, [nombre, telefono, correo_electronico, password, codigoAfiliado, numero_afiliado_referente], (err, results) => {
+      connection.query(insertQuery, [nombre, telefono, correo_electronico, hashedPassword, codigoAfiliado, numero_afiliado_referente], (err, results) => {
         if (err) {
           console.error('Error al insertar usuario:', err);
           res.status(500).json({ error: 'Error interno del servidor para insertar' });
           return;
         }
-
+      });
         // Buscar el ID del usuario recién insertado
         const selectUserIdQuery = 'SELECT id FROM usuarios WHERE correo_electronico = ?';
         connection.query(selectUserIdQuery, [correo_electronico], (err, userIdResults) => {
@@ -212,7 +222,6 @@ app.post('/registro', (req, res) => {
           }
 
           const userId = userIdResults[0].id;
-          
 
           // Insertar datos predeterminados en la tabla cuentas_bancarias
           const insertCuentaQuery = `
@@ -272,10 +281,12 @@ app.get('/getBlob/:userId', (req, res) => {
 // Ruta para manejar las solicitudes de inicio de sesión
 app.post('/login', (req, res) => {
   const { correo_electronico, password } = req.body;
+  
   // Realizar la lógica de autenticación con la base de datos aquí
   // Por ejemplo, puedes hacer una consulta a la base de datos para verificar las credenciales
-  const query = `SELECT * FROM usuarios WHERE correo_electronico = ? AND password = ?`;
-  connection.query(query, [correo_electronico, password], (err, results) => {
+  const query = 'SELECT * FROM usuarios WHERE correo_electronico = ?';
+  
+  connection.query(query, [correo_electronico], (err, results) => {
     if (err) {
       console.error('Error al realizar la consulta:', err);
       res.status(500).json({ error: 'Error interno del servidor' });
@@ -285,17 +296,33 @@ app.post('/login', (req, res) => {
       // Si no se encuentra el usuario, devolver un error de credenciales inválidas
       res.status(401).json({ error: 'Credenciales inválidas' });
     } else {
-      // Si las credenciales son válidas, iniciar sesión exitosamente y enviar los datos del usuario
+      // Si las credenciales son válidas, verificar la contraseña con bcrypt
       const usuario = results[0]; // Suponiendo que solo se espera un resultado
-      console.log('Datos del usuario:', usuario); // Imprimir los datos del usuario en la consola del servidor
-      const { foto_usuario, ...usuarioSinFoto } = usuario;
-      const token = jwt.sign({ usuario: usuarioSinFoto }, 'clave_secreta', { expiresIn: '1h' });
-      // Excluir el campo foto_usuario del objeto usuario
-      
-      console.log('Token generado:', token);
-      res.status(200).json({ message: 'Inicio de sesión exitoso', usuario: usuarioSinFoto, token });
+      const hashedPassword = usuario.password;
+      console.log('esta es la contraseña que se obtiene:',hashedPassword);
+      bcrypt.compare(password, hashedPassword, (err, isMatch) => {
+        if (err) {
+          console.error('Error al comparar las contraseñas:', err);
+          res.status(500).json({ error: 'Error interno del servidor para comparar las contraseñas' });
+          return;
+        }
+        console.log('esto rregresa',isMatch)
+        if (isMatch) {
+          // Si las contraseñas coinciden, iniciar sesión exitosamente y enviar los datos del usuario
+          const { foto_usuario, ...usuarioSinFoto } = usuario;
+          const token = jwt.sign({ usuario: usuarioSinFoto }, 'clave_secreta', { expiresIn: '1h' });
+          // Excluir el campo foto_usuario del objeto usuario
+          
+          console.log('Datos del usuario:', usuario); // Imprimir los datos del usuario en la consola del servidor
+          console.log('Token generado:', token);
+          res.status(200).json({ message: 'Inicio de sesión exitoso', usuario: usuarioSinFoto, token });
+        } else {
+          res.status(401).json({ error: 'Credenciales inválidas' });
+        }
+      });
     }
   });
+
 });
 
 app.post('/autenticacion-biometrica', (req, res) => {
@@ -769,14 +796,12 @@ app.post('/sendVerificationEmail', (req, res) => {
       pass: 'adtx cfpz ggsc qcre'
     }
   });
-  
   connection.query('UPDATE usuarios SET verificacionToken = ? WHERE id = ?', [usertoken, userId], (error, results, fields) => {
     if (error) {
       console.error('Error al guardar el token de verificación:', error);
     } else {
       console.log('Token de verificación guardado correctamente');
     }
-
    // Corregido aquí
     const mailOptions = {
       from: 'lechuga.lflr@gmail.com',
@@ -848,7 +873,6 @@ app.post('/sendVerificationEmail', (req, res) => {
   });
   });
 });
-
 app.get('/verify', async (req, res) => {
   const token = req.query.token;
 
@@ -914,7 +938,6 @@ app.get('/verify', async (req, res) => {
     </div>
 </body>
 </html>
-
             `;
             
             res.send(htmlResponse);
@@ -923,6 +946,229 @@ app.get('/verify', async (req, res) => {
   } catch (error) {
       console.error('Error al verificar el token:', error);
       res.status(400).send('Token de verificación inválido o expirado');
+  }
+});
+
+
+// const accessToken = 'APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573';
+
+// app.post('/api/transfer', async (req, res) => {
+//   const { external_reference, payer_email, amount, description } = req.body;
+
+//   try {
+//     const response = await axios.post(
+//       'https://api.mercadopago.com/v1/funds',
+//       {
+//         external_reference,
+//         payer: {
+//           email: payer_email,
+//         },
+//         amount,
+//         description,
+//         transfer: {
+//           destination: {
+//             account_number: '5120694470616271',
+//             bank_code: '1',
+//             bank_name: 'Santander',
+//           },
+//         },
+//       },
+//       {
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${accessToken}`,
+//         },
+//       }
+//     );
+
+//     res.status(200).json(response.data);
+//   } catch (error) {
+//     res.status(500).json({ error: error.toString() });
+//   }
+// });
+
+app.post('/create-payment-intent', async (req, res) => {
+  const customer = await stripe.customers.create();
+  console.log('estos son datos de costumer',customer);
+  const ephemeralKey = await stripe.ephemeralKeys.create(
+    
+    {customer: customer.id},
+    {apiVersion: '2023-10-16'}
+  );
+  try {
+    const {amount} = req.body; 
+    console.log('aqui recibo amount',amount);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'MXN',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+    res.json({
+    clientSecret: paymentIntent.client_secret,
+    ephemeralKey: ephemeralKey.secret,
+    customer: customer.id,
+    publishableKey: 'pk_test_51OqKITGl1997KuzQtjbApKQq3BHUmppquCKHHux8h4ab0r1KO30X21OgHDkhGW62pEdwzQj81z2z8F44i8yJ2upb003Zv3aMWw'
+  });
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        message: error.message,
+      },
+    });
+  }
+});
+
+app.post('/transfer', async (req, res) => {
+  const { from_account, to_account, amount, currency } = req.body;
+
+  try {
+    const authString = `${process.env.BITSO_API_KEY}:`;
+    const authBuffer = Buffer.from(authString, 'utf8');
+    const authBase64 = authBuffer.toString('base64');
+
+    // Get the user's accounts
+    const accountsResponse = await axios.get(
+      'https://api.bitso.com/v3/accounts',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${authBase64}`,
+        },
+      }
+    );
+
+    const accounts = accountsResponse.data.data;
+
+    // Find the from_account and to_account in the list of accounts
+    const fromAccount = accounts.find(
+      (account) => account.id === from_account
+    );
+    const toAccount = accounts.find((account) => account.id === to_account);
+
+    // Make sure the accounts belong to the user
+    if (!fromAccount || !toAccount) {
+      return res.status(400).json({ message: 'Invalid account' });
+    }
+
+    // Initiate the transfer
+    const transferResponse = await axios.post(
+      'https://api.bitso.com/v3/btc_withdrawals',
+      {
+        currency,
+        amount,
+        address: toAccount.address,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${authBase64}`,
+        },
+      }
+    );
+
+    const transferId = transferResponse.data.data.id;
+
+    res.status(200).json({ message: 'Transfer initiated' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Transfer failed' });
+  }
+});
+const { Client, resources, Webhook } = require("coinbase-commerce-node");
+const {
+  COINBASE_API_KEY,
+  COINBASE_WEBHOOK_SECRET,
+  DOMAIN,
+} = require("./config");
+
+const { Charge } = resources;
+Client.init(COINBASE_API_KEY);
+app.get("/create-charge", async (req, res) => { 
+  
+  const chargeData = {
+    
+    name: "Sound Effect",
+    description: "An awesome science fiction sound effect",
+    local_price: {
+      amount: 0.2,
+      currency: "USD",
+    },
+    pricing_type: "fixed_price",
+    metadata: {
+      customer_id: "id_1005",
+      customer_name: "Satoshi Nakamoto",
+    },
+    redirect_url: `${DOMAIN}/success-payment`,
+    cancel_url: `${DOMAIN}/cancel-payment`,
+  };
+  console.log(COINBASE_API_KEY,
+    COINBASE_WEBHOOK_SECRET,
+    DOMAIN);
+    console.log('datos cargados',chargeData);
+  const charge = await Charge.create(chargeData);
+
+  console.log(charge);
+
+  res.send(charge);
+});
+
+app.post("/payment-handler", (req, res) => {
+  const rawBody = req.rawBody;
+  const signature = req.headers["x-cc-webhook-signature"];
+  const webhookSecret = COINBASE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
+    // console.log(event);
+
+    if (event.type === "charge:pending") {
+      // received order
+      // user paid, but transaction not confirm on blockchain yet
+      console.log("pending payment");
+    }
+
+    if (event.type === "charge:confirmed") {
+      // fulfill order
+      // charge confirmed
+      console.log("charge confirme");
+    }
+
+    if (event.type === "charge:failed") {
+      // cancel order
+      // charge failed or expired
+      console.log("charge failed");
+    }
+
+    res.send(`success ${event.id}`);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("failure");
+  }
+});
+
+app.get("/success-payment", (req, res) => {
+  res.send("success payment");
+});
+
+app.post('/create-payment-intent2', async (req, res) => {
+  try {
+    const {currency,card} = req.body;
+    console.log('Datos recibidos del cliente:', req.body);
+    console.log('Datos recibidos del card:', card); // Agrega este registro para imprimir los datos recibidos
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: 7777, // Monto a cobrar en centavos
+      currency: currency, // Moneda
+      payment_method_types: ['card'],
+      payment_method: card,
+    });
+    const clientSecret = paymentIntent.client_secret;
+    res.json({ clientSecret,payment_method });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

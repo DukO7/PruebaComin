@@ -74,7 +74,7 @@ export default function Documentos({ route }) {
             <View style={styles.containerdatos}>
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>Verificación de Identidad</Text>
-                    <Text style={styles.subtitle}>Por favor, sube una imagen de tu INE para verificar tu identidad.</Text>
+                    <Text style={styles.subtitle}>Interfaz para saber el estatus de mi documentacion</Text>
                 </View>
             </View>
 
@@ -96,24 +96,24 @@ export default function Documentos({ route }) {
                 )}
             </View>
 
-            {usuario.verificado_ine === 0 && (
+            {/* {usuario.verificado_ine === 0 && (
                 <TouchableOpacity style={styles.cajaBoton} onPress={() => navigation.navigate('Verificacion', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados })}>
                     <Text style={styles.TextoBoton}>
                         Verificar INE
                     </Text>
                 </TouchableOpacity>
-            )}
+            )} */}
 
-            {usuario.verificado_curp === 0 && (
+            {/* {usuario.verificado_curp === 0 && (
                 <TouchableOpacity style={styles.cajaBoton} onPress={() => navigation.navigate('VerificacionC', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados })}>
                     <Text style={styles.TextoBoton}>
                         Verificar CURP
                     </Text>
                 </TouchableOpacity>
-            )}
+            )} */}
 
             {usuario.verificado_ine === 1 && (
-                <View style={{ flexDirection: 'row', left: 70 }}>
+                <View style={{ flexDirection: 'row', left: 70,marginTop:40 }}>
 
                     <Text style={styles.TextoValidado}>
                         Documento INE validado
@@ -122,7 +122,7 @@ export default function Documentos({ route }) {
                 </View>
             )}
             {usuario.verificado_curp === 1 && (
-                <View style={{ flexDirection: 'row', left: 70 }}>
+                <View style={{ flexDirection: 'row', left: 70,marginTop:20 }}>
 
                     <Text style={styles.TextoValidado}>
                         Documento CURP validado

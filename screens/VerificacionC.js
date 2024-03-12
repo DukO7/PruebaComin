@@ -29,7 +29,7 @@ export default function VerificacionC({ route  }) {
     const [verified, setVerified] = useState(false); // Estado para verificar si el usuario ha verificado sus datos
 
     const navigation = useNavigation();
-    const { usuario, affiliateBonus,datosafiliados } = route.params;
+    const { usuario, affiliateBonus,datosafiliados,cuentaBancaria } = route.params;
     const handlePress = (screenName) => {
         navigation.navigate(screenName);
     };
@@ -121,7 +121,7 @@ export default function VerificacionC({ route  }) {
                     // Si la actualización fue exitosa, mostrar una alerta
                     setShowAlert(false);
                     Alert.alert('Éxito', 'Verificacion exitosa de la curp.');
-                    navigation.navigate('Inversiones',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados });
+                    navigation.navigate('Inversiones',{ usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria });
                 } catch (error) {
                     console.error('Error al actualizar verificado_ine:', error);
                     Alert.alert('Error', 'No se pudo actualizar el campo verificado_ine. Inténtalo de nuevo más tarde.');
@@ -290,15 +290,15 @@ export default function VerificacionC({ route  }) {
 </View>
            
             <View style={styles.containernav}>
-                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
+                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="wallet" size={30} color="white" />
                     <Text style={styles.textnavbar}>Cartera</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
+                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="analytics" size={30} color="white" />
                     <Text style={styles.textnavbar2}>Inversiones</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados })}>
+                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="arrow-back" size={30} color="white" />
                     <Text style={styles.textnavbar2}>Retirar</Text>
                 </TouchableOpacity>

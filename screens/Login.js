@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Text, StyleSheet, View, Image, TextInput, TouchableOpacity, Alert, Switch } from "react-native";
-import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import appFirebase from '../credentials';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import CustomAlert from './CustomAlert';

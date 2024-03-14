@@ -9,6 +9,27 @@ import moment from 'moment';
 import differenceInDays from 'date-fns/differenceInDays';
 export default function Retirar({ route }) {
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria } = route.params;
+    const [cuentaBancaria1, SetcuentaBancaria] = useState(0);
+    const [retiros, setRetiros] = useState(0);
+    useEffect(() => {
+        const fetchData = async () => {
+          try {
+            // Supongamos que obtienes el usuario de alguna manera
+            const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado });
+            SetcuentaBancaria (afiliados.data.cuenta);
+            console.log('Esto se recibe1:', cuentaBancaria1);
+          } catch (error) {
+            console.error('Error al obtener los datoss:', error);
+          }
+        };
+    
+        fetchData();
+    
+        // Si necesitas que este efecto se ejecute solo una vez al montar el componente,
+        // puedes pasar un array vacío como segundo argumento de useEffect.
+        // Si necesitas que se ejecute cada vez que cambie alguna dependencia,
+        // puedes pasar las dependencias como segundo argumento de useEffect.
+      }, [retiros]);
     const handleInvertirClick = () => {
         const currentDate = new Date();
         const userCreationDate = new Date(usuario.fecha_creacion);
@@ -20,7 +41,6 @@ export default function Retirar({ route }) {
         // Obtener la fecha de creación de la cuenta (asumiendo que está en el objeto 'usuario')
         const accountCreationDate = new Date(usuario.fecha_creacion);
 
-    
         // Calcular la diferencia en milisegundos entre la fecha actual y la fecha de creación de la cuenta
         const differenceInMilliseconds = currentDate.getTime() - accountCreationDate.getTime();
     
@@ -140,6 +160,7 @@ export default function Retirar({ route }) {
             });
             
             console.log('fue un exito',datos.data.alerta);
+            setRetiros(retiros + 1);
             if(datos.data.alerta==1){
                 setShowAlert(false);
                 Alert.alert('Monto retirado exitosamente')
@@ -199,13 +220,14 @@ export default function Retirar({ route }) {
                     <View style={styles.textContainer}>
                         <Text style={styles.textDerecha}>RETIRAR</Text>
                         <Text style={styles.textDerecha2}>Balance</Text>
-                        <Text style={styles.textDerecha1}>$ {cuentaBancaria.saldo_afiliados}</Text>
+                        <Text style={styles.textDerecha1}>$ {cuentaBancaria1.saldo_afiliados}</Text>
                     </View>
                 </View>
                 <View style={styles.containerDivider}>
 
                     <View style={styles.divider} />
                 </View>
+                <View style={styles.container3}>
                 <View style={styles.cajaTexto}>
                     <TextInput
                         style={[styles.moneyBar, { textAlign: 'right' }]}
@@ -226,6 +248,7 @@ export default function Retirar({ route }) {
                             Retirar
                         </Text>
                     </TouchableOpacity>
+                </View>
                 </View>
                 <View style={styles.containernav}>
                     <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
@@ -262,7 +285,8 @@ const styles = StyleSheet.create({
         paddingVertical: 17,
         backgroundColor: 'white',
         borderRadius: 15,flex: 1,
-        marginVertical: 10
+        marginVertical: 10,
+        flex:1
     },
     header1: {
         backgroundColor: '#1d2027',
@@ -468,13 +492,16 @@ const styles = StyleSheet.create({
         bottom: 32
     },
     FatherBoton: {
-        flex:2,
         alignItems: 'center',
-        top:'45%',
+        top:'70%',
         left:'20%',
         position:'absolute'
+        
 
     },
+    container3: {
+        flexDirection: 'row', // Alinear elementos en una fila
+      },
     cajaBoton: {
         backgroundColor: '#7192b3',
         borderRadius: 15,

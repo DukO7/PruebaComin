@@ -136,7 +136,7 @@ export default function DatosBanco({ route }) {
     nombre_banco: '',
     nombre_cuenta: '',
     numero_cuenta: '',
-    saldo_actual: '',
+    //saldo_actual: '',
   });
   const handleChange = (name, value) => {
     setCuenta(prevState => ({
@@ -152,7 +152,7 @@ export default function DatosBanco({ route }) {
       banco: cuenta.nombre_cuenta, 
       nombre_cuenta: cuenta.nombre_cuenta,
       numero_cuenta: cuenta.numero_cuenta,
-      saldo_afiliados: cuenta.saldo_actual,
+      //saldo_afiliados: cuenta.saldo_actual,
       usuarioId: usuario.id
     };
 
@@ -292,7 +292,7 @@ export default function DatosBanco({ route }) {
               </View>
             </View>
 
-            <View style={styles.containerdatos}>
+            {/* <View style={styles.containerdatos}>
               <View style={styles.textContainer}>
                 <Text style={styles.text}>Saldo actual</Text>
               </View>
@@ -301,7 +301,7 @@ export default function DatosBanco({ route }) {
                 <TextInput placeholder="" style={styles.inputs}value={cuenta.saldo_actual}
         onChangeText={text => handleChange('saldo_actual', text)} />
               </View>
-            </View>
+            </View> */}
           </View>
 
           <View style={styles.containerDivider}>
@@ -386,6 +386,7 @@ export default function DatosBanco({ route }) {
                 usuario: usuario,
                 affiliateBonus: affiliateBonus,
                 datosafiliados: datosafiliados,
+                cuentaBancaria:cuentaBancaria
               })
             }
           >
@@ -399,6 +400,7 @@ export default function DatosBanco({ route }) {
                 usuario: usuario,
                 affiliateBonus: affiliateBonus,
                 datosafiliados: datosafiliados,
+                cuentaBancaria:cuentaBancaria
               })
             }
           >
@@ -412,6 +414,7 @@ export default function DatosBanco({ route }) {
                 usuario: usuario,
                 affiliateBonus: affiliateBonus,
                 datosafiliados: datosafiliados,
+                cuentaBancaria: cuentaBancaria
               })
             }
           >

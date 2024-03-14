@@ -299,22 +299,45 @@ app.post('/login', (req, res) => {
       // Si las credenciales son válidas, verificar la contraseña con bcrypt
       const usuario = results[0]; // Suponiendo que solo se espera un resultado
       const hashedPassword = usuario.password;
-      console.log('esta es la contraseña que se obtiene:',hashedPassword);
+      
       bcrypt.compare(password, hashedPassword, (err, isMatch) => {
         if (err) {
           console.error('Error al comparar las contraseñas:', err);
           res.status(500).json({ error: 'Error interno del servidor para comparar las contraseñas' });
           return;
         }
-        console.log('esto rregresa',isMatch)
+
         if (isMatch) {
           // Si las contraseñas coinciden, iniciar sesión exitosamente y enviar los datos del usuario
           const { foto_usuario, ...usuarioSinFoto } = usuario;
           const token = jwt.sign({ usuario: usuarioSinFoto }, 'clave_secreta', { expiresIn: '1h' });
-          // Excluir el campo foto_usuario del objeto usuario
           
-          console.log('Datos del usuario:', usuario); // Imprimir los datos del usuario en la consola del servidor
-          console.log('Token generado:', token);
+          // Verificar si ha pasado más de 15 días desde el último retiro del usuario
+          const queryUltimoRetiro = 'SELECT MAX(fecha_inicio) AS ultima_fecha_retiro FROM inversiones WHERE id_usuario = ? AND descripcion = "Retiro de cuenta"';
+          connection.query(queryUltimoRetiro, [usuario.id], (err, results) => {
+            if (err) {
+              console.error('Error al obtener la fecha del último retiro:', err);
+              res.status(500).json({ error: 'Error interno del servidor al obtener la fecha del último retiro' });
+              return;
+            }
+            
+            const ultimaFechaRetiro = results[0].ultima_fecha_retiro;
+            console.log('Fecha del último retiro:', ultimaFechaRetiro);
+            const diasTranscurridos = ultimaFechaRetiro ? Math.floor((new Date() - new Date(ultimaFechaRetiro)) / (1000 * 60 * 60 * 24)) : null;
+            console.log('dias de retiro:', diasTranscurridos);
+            if (diasTranscurridos === null || diasTranscurridos > 15) {
+              // Actualizar el campo actualizado_saldo en la tabla usuarios
+              const queryActualizarSaldo = 'UPDATE usuarios SET actualizado_saldo = 0 WHERE id = ?';
+              connection.query(queryActualizarSaldo, [usuario.id], (err, results) => {
+                if (err) {
+                  console.error('Error al actualizar el campo actualizado_saldo:', err);
+                  res.status(500).json({ error: 'Error interno del servidor al actualizar el campo actualizado_saldo' });
+                  return;
+                }
+              });
+            }
+          });
+
           res.status(200).json({ message: 'Inicio de sesión exitoso', usuario: usuarioSinFoto, token });
         } else {
           res.status(401).json({ error: 'Credenciales inválidas' });
@@ -322,8 +345,8 @@ app.post('/login', (req, res) => {
       });
     }
   });
-
 });
+
 
 app.post('/autenticacion-biometrica', (req, res) => {
   const { token } = req.body;
@@ -622,7 +645,8 @@ const saldoEntero = parseInt(saldoSinComa, 10);
     const query = `UPDATE usuarios AS u
     JOIN cuentas_bancarias AS cb ON u.id = cb.id_usuario
     SET u.saldo = cb.saldo_afiliados - ?,
-        cb.saldo_afiliados = cb.saldo_afiliados - ?
+        cb.saldo_afiliados = cb.saldo_afiliados - ?,
+        u.actualizado_saldo= 1
     WHERE u.id = ?`;
     const query1 =`INSERT INTO inversiones (id_usuario, cantidad, descripcion, fecha_inicio) VALUES (?, ?, ?, ?)`;
     // Ejecutar la consulta
@@ -645,17 +669,17 @@ app.post("/act-datosbanco", (req, res) => {
     titular_cuenta,numero_tarjeta,banco,nombre_cuenta,numero_cuenta,saldo_afiliados,usuarioId} = req.body;
 
   // Query para actualizar los datos en la base de datos
-  const query = `UPDATE usuarios SET saldo =? WHERE id = ?`;
+  // const query = `UPDATE usuarios SET saldo =? WHERE id = ?`;
 
   // Ejecutar la consulta
-  connection.query(query,[saldo_afiliados, usuarioId],
-    (error, results) => {
-      if (error) {
-        console.error("Error al actualizar el saldo del usuario:", error);
-        res.status(500).json({ error: "Error interno del servidor" });
-        return;
-      }
-      console.log("Saldo del usuario actualizado correctamente:", results);
+  // connection.query(query,[saldo_afiliados, usuarioId],
+  //   (error, results) => {
+  //     if (error) {
+  //       console.error("Error al actualizar el saldo del usuario:", error);
+  //       res.status(500).json({ error: "Error interno del servidor" });
+  //       return;
+  //     }
+  //     console.log("Saldo del usuario actualizado correctamente:", results);
 
       // Si se actualizó el saldo del usuario correctamente, también se pueden actualizar otros datos de la cuenta bancaria si es necesario
       const updateQuery = `
@@ -680,8 +704,8 @@ app.post("/act-datosbanco", (req, res) => {
           res.status(200).json({ message: "Datos del usuario y cuenta bancaria actualizados correctamente" });
         }
       );
-    }
-  );
+    //}
+  //);
 });
 
 app.post("/usuarios", (req, res) => {
@@ -865,7 +889,7 @@ app.post('/sendVerificationEmail', (req, res) => {
               <h1>Verificación de correo electrónico</h1>
               <p>Hola,</p>
               <p>Por favor, haz clic en el siguiente enlace para verificar tu dirección de correo electrónico:</p>
-              <a href="http://192.168.1.72:3000/verify?token=${usertoken}">Verificar correo electrónico</a>
+              <a href="https://tvt0tnk6-3000.usw3.devtunnels.ms/verify?token=${usertoken}">Verificar correo electrónico</a>
           </div>
       </body>
       </html>

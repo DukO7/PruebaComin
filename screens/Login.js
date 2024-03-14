@@ -217,7 +217,7 @@ export default function Login(props) {
             <View style={styles.tarjeta}>
                 {!useBiometric && (
                     <View style={styles.cajaTexto}>
-                        <TextInput placeholder='Usuario / ID' style={{ paddingHorizontal: 65 }} onChangeText={(text) => setEmail(text)} />
+                        <TextInput placeholder='Usuario / ID' style={{ paddingHorizontal: 65 }} onChangeText={(text) => setEmail(text)}  autoCapitalize='none'/>
                         <Ionicons name='person' size={35} color='white' style={styles.iconoUsuario} />
                     </View>
                 )}
@@ -230,6 +230,7 @@ export default function Login(props) {
                             secureTextEntry={!showPassword}
                             value={password}
                             onChangeText={(text) => setPassword(text)}
+                            autoCapitalize='none'
                         />
                         <Ionicons name='lock-closed-outline' size={35} color='white' style={styles.iconoUsuario} />
                         <TouchableOpacity onPress={togglePasswordVisibility} style={styles.iconoMostrar}>

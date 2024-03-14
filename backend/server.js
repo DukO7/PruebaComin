@@ -412,12 +412,18 @@ app.post('/update-balance', (req, res) => {
         }
 
         // Calcular el 5% del saldo total de los afiliados
+        console.log('esto es lo que sumo',totalAffiliateBalance);
         const affiliateBonus = totalAffiliateBalance * 0.05;
+        console.log('esto es el bono de 0.05',affiliateBonus);
         const updateQuery = `
-          UPDATE cuentas_bancarias AS cb
-          JOIN usuarios AS u ON cb.id_usuario = u.id
-          SET cb.saldo_afiliados = u.saldo + ?
-          WHERE u.id = ?
+        UPDATE cuentas_bancarias AS cb
+        JOIN usuarios AS u ON cb.id_usuario = u.id
+        SET cb.saldo_afiliados = 
+            CASE 
+                WHEN u.actualizado_saldo = 0 THEN u.saldo + ?  
+                ELSE cb.saldo_afiliados
+            END
+        WHERE u.id = ?;
         `;
 
         connection.query(updateQuery, [affiliateBonus, usuarioId], (err, results) => {
@@ -447,13 +453,14 @@ app.post('/update-balance', (req, res) => {
             `;
 
             // Ejecutar la consulta SQL y procesar los resultados
+            
             connection.query(querybank, [usuarioId], (err, results1) => {
               if (err) {
                 console.error('Error al obtener las inversiones:', err);
                 res.status(500).json({ error: 'Error interno del servidor' });
                 return;
               }
-
+            
               // Objeto para almacenar las inversiones por fecha
               const inversionesPorFecha = {};
 
@@ -606,13 +613,20 @@ app.post("/Act_inversion", (req, res) => {
 });
 
 app.post("/Retirar", (req, res) => {
+  
   const { usuarioId, saldo,saldototal,fecha_inicio } = req.body;
-   
-  if(saldototal>=saldo){
-    const query = `UPDATE usuarios SET saldo=saldo-? WHERE id=?`;
+  const saldoSinComa = saldo.replace(/,/g, '');
+const saldoEntero = parseInt(saldoSinComa, 10);
+   console.log('saldo',saldoEntero,'mas saldo total:',saldototal);
+  if(saldototal>=saldoEntero){
+    const query = `UPDATE usuarios AS u
+    JOIN cuentas_bancarias AS cb ON u.id = cb.id_usuario
+    SET u.saldo = cb.saldo_afiliados - ?,
+        cb.saldo_afiliados = cb.saldo_afiliados - ?
+    WHERE u.id = ?`;
     const query1 =`INSERT INTO inversiones (id_usuario, cantidad, descripcion, fecha_inicio) VALUES (?, ?, ?, ?)`;
     // Ejecutar la consulta
-    connection.query(query, [saldo, usuarioId,saldo], (error, results) => {
+    connection.query(query, [saldoEntero, saldoEntero, usuarioId], (error, results) => {
       if (error) {
         console.error("Error al actualizar datos del usuario:", error);
         res.status(500).json({ error: "Error interno del servidor" });
@@ -625,9 +639,7 @@ app.post("/Retirar", (req, res) => {
     });
   }
   // Query para actualizar los datos en la base de datos
-  
 });
-
 app.post("/act-datosbanco", (req, res) => {
   const {
     titular_cuenta,numero_tarjeta,banco,nombre_cuenta,numero_cuenta,saldo_afiliados,usuarioId} = req.body;
@@ -822,7 +834,6 @@ app.post('/sendVerificationEmail', (req, res) => {
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                  height: 100vh;
               }
               .container {
                   text-align: center;
@@ -1156,20 +1167,91 @@ app.get("/success-payment", (req, res) => {
 
 app.post('/create-payment-intent2', async (req, res) => {
   try {
-    const {currency,card} = req.body;
+    const {currency,type,payment_method} = req.body;
     console.log('Datos recibidos del cliente:', req.body);
-    console.log('Datos recibidos del card:', card); // Agrega este registro para imprimir los datos recibidos
+    console.log('Datos recibidos del card:', type); // Agrega este registro para imprimir los datos recibidos
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 7777, // Monto a cobrar en centavos
       currency: currency, // Moneda
-      payment_method_types: ['card'],
-      payment_method: card,
+      type: 'card',
+      payment_method: payment_method,
     });
+    console.log('datos despues del create:',paymentIntent);
     const clientSecret = paymentIntent.client_secret;
     res.json({ clientSecret,payment_method });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const {amount} = req.body;
+    console.log('Datos recibidos del cliente:', req.body);
+    const unit_amount = amount + "00";
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price_data: {
+            product_data: {
+              name: "Inversion Fintech",
+            },
+            currency: "mxn",
+            unit_amount: unit_amount,
+          },
+          quantity: 1,
+        },
+      ],
+      
+      mode: "payment",
+      success_url: "http://localhost:3000/success",
+    });
+    console.log('datos despues del create:',session.url);
+    
+    res.json({ url: session.url});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+const endpointSecret = "whsec_a3f2b80a59ed33450f0d762e87886bfd3e0481fbdfd7ae3bc18500ee18a0309c";
+
+app.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {
+  const sig = request.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+  } catch (err) {
+    response.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  // Handle the event
+  console.log(`Unhandled event type ${event.type}`);
+  switch (event.type) {
+    case 'checkout.session.async_payment_failed':
+      const checkoutSessionAsyncPaymentFailed = event.data.object;
+      // Then define and call a function to handle the event checkout.session.async_payment_failed
+      break;
+    case 'checkout.session.async_payment_succeeded':
+      const checkoutSessionAsyncPaymentSucceeded = event.data.object;
+      // Then define and call a function to handle the event checkout.session.async_payment_succeeded
+      break;
+    case 'checkout.session.completed':
+      const checkoutSessionCompleted = event.data.object;
+      // Then define and call a function to handle the event checkout.session.completed
+      break;
+    case 'checkout.session.expired':
+      const checkoutSessionExpired = event.data.object;
+      // Then define and call a function to handle the event checkout.session.expired
+      break;
+    // ... handle other event types
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+  // Return a 200 response to acknowledge receipt of the event
+  response.send();
 });
 
 // Escuchar en el puerto 3000

@@ -9,6 +9,7 @@ import { openBrowserAsync } from 'expo-web-browser';
 const Pasarela = ({ route }) => {
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,textInputValue} = route.params;
     const navigation = useNavigation();
+    const [checkoutUrl, setCheckoutUrl] = useState(null);
     const [showAlert, setShowAlert] = useState(false);
     const PaymentService = {
         async createPayment() {
@@ -129,7 +130,7 @@ const Pasarela = ({ route }) => {
       }
     
       try {
-        const response = await axios.post('http://localhost:3000/transfer', {
+        const response = await axios.post('http://192.168.1.72:3000/transfer', {
           from_account: fromAccount.id,
           to_account: toAccount.id,
           amount,
@@ -140,6 +141,28 @@ const Pasarela = ({ route }) => {
       } catch (error) {
         console.error(error);
       }
+    };
+    const handleCheckout = async () => {
+      console.log('esta siendo llamado');
+      const res = await fetch('http://192.168.1.72:3000/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: textInputValue,
+          currency: 'mxn',
+          paymentMethodType: 'card',
+          paymentMethod: 'pm_card_visa',
+          confirm: true
+        })
+      });
+      const data = await res.json();
+      setCheckoutUrl(data.url);
+      console.log('esto recibo de await',data.url);
+      navigation.navigate('Spei2',{usuario,checkoutUrl:data.url})
+      
+      
     };
   return (
     <View style={styles.container}>
@@ -153,7 +176,7 @@ const Pasarela = ({ route }) => {
       <View style={styles.buttonContainer}>
         <Button
           title="Pagar con SPEI"
-          onPress={() => navigation.navigate('Spei2',{usuario,textInputValue})}
+          onPress={handleCheckout}
         />
       </View>
       <View style={styles.buttonContainer}>

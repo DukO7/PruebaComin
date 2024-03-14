@@ -7,27 +7,27 @@ import SidebarModal from "./SidebarModal";
 export default function Cartera({ route }) {
     const [dates, setDates] = useState([]);
 const [inversions, setInversions] = useState([]);
-    useEffect(() => {
-        const filteredDates = Object.keys(inversionesPorFecha);
-        setDates(filteredDates);
-        if (showDeposits) {
-          const filteredInversions = [];
-          filteredDates.forEach(date => {
-            const inversionsForDate = inversionesPorFecha[date];
-            const filteredInversionsForDate = inversionsForDate.filter(inversion => inversion.descripcion.includes('transferencia SPEI'));
-            filteredInversions.push(...filteredInversionsForDate);
-          });
-          setInversions(filteredInversions);
-        } else {
-          const filteredInversions = [];
-          filteredDates.forEach(date => {
-            const inversionsForDate = inversionesPorFecha[date];
-            const filteredInversionsForDate = inversionsForDate.filter(inversion => inversion.descripcion.includes('Retiro de cuenta'));
-            filteredInversions.push(...filteredInversionsForDate);
-          });
-          setInversions(filteredInversions);
-        }
-      }, [showDeposits, inversionesPorFecha]);
+useEffect(() => {
+  const filterInversionsByType = (type) => {
+    const filteredInversions = [];
+    const filteredDates = Object.keys(inversionesPorFecha);
+
+    filteredDates.forEach(date => {
+      const inversionsForDate = inversionesPorFecha[date];
+      const filteredInversionsForDate = inversionsForDate.filter(inversion => inversion.descripcion.includes(type));
+      filteredInversions.push(...filteredInversionsForDate);
+    });
+
+    setDates(filteredDates);
+    setInversions(filteredInversions);
+  };
+
+  if (showDeposits) {
+    filterInversionsByType('transferencia SPEI');
+  } else {
+    filterInversionsByType('Retiro de cuenta');
+  }
+}, [showDeposits, inversionesPorFecha]);
     const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
     const inversionsByDate = {};
 inversions.forEach(inversion => {
@@ -66,6 +66,8 @@ inversions.forEach(inversion => {
     };
     const [showDeposits, setShowDeposits] = useState(true);
     const [imageError, setImageError] = useState(false);
+
+    
     return (
         <View style={styles.container}>
             <View style={styles.header1}>
@@ -112,7 +114,7 @@ inversions.forEach(inversion => {
             <View style={styles.creditCard}>
       <Image source={CreditCardImage} style={styles.creditCardImage} />
       <Text style={styles.balanceText}>Balance</Text>
-      <Text style={styles.balanceAmount}>$ {(usuario.saldo || 0) + (affiliateBonus || 0)}</Text>
+      <Text style={styles.balanceAmount}>$ {cuentaBancaria.saldo_afiliados}</Text>
       <View style={styles.cardContent}>
         
         <Text style={styles.cardNameText}>{cuentaBancaria.nombre_cuenta}</Text>
@@ -142,6 +144,7 @@ inversions.forEach(inversion => {
   extraData={showDeposits} // Pasamos 'showDeposits' como información adicional
   renderItem={({ item }) => {
     const filteredInversions = showDeposits
+    
       ? item[1].filter(inversion => inversion.descripcion.includes('Transferencia SPEI'))
       : item[1].filter(inversion => inversion.descripcion.includes('Retiro de cuenta'));
 

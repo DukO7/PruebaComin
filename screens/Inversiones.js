@@ -7,9 +7,12 @@ import axios from 'axios';
 import { openBrowserAsync } from 'expo-web-browser';
 import CustomAlert from './CustomAlert';
 import moment from 'moment';
+import { Picker } from '@react-native-picker/picker';
 export default function Inversiones({ route }) {
-    
+    const [selectedPlan, setSelectedPlan] = useState('');
+    const [selectedAdditionalPlan, setSelectedAdditionalPlan] = useState('');
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,} = route.params;
+    const [exchangeRates, setExchangeRates] = useState({});
     // const [updatedUser, setUpdatedUser] = useState(usuario);
     // useEffect(() => {
     //     const fetchUserData = async () => {
@@ -31,7 +34,22 @@ export default function Inversiones({ route }) {
     //     fetchUserData();
     //   }, [usuario]);
     // console.log('son los datos que recibo:',updatedUser);
-
+    useEffect(() => {
+        fetchExchangeRates();
+      }, []);
+      const fetchExchangeRates = async () => {
+        try {
+          const response = await fetch('https://open.er-api.com/v6/latest/USD');
+          const data = await response.json();
+          setExchangeRates(data.rates);
+        } catch (error) {
+          console.error('Error fetching exchange rates:', error);
+        }
+      };
+    
+      const calculateMXNValue = (usdValue) => {
+        return Math.round(usdValue * exchangeRates.MXN);
+      };
     const [showAlert, setShowAlert] = useState(false);
     const [textInputValue, setTextInputValue] = useState("");
     
@@ -141,7 +159,7 @@ export default function Inversiones({ route }) {
                 console.log('esta es la fecha que guardara:',timestamp);
                 await axios.post('http://192.168.1.72:3000/Act_inversion', {
                     usuarioId: usuario.id,
-                    saldo: textInputValue, 
+                    saldo: selectedAdditionalPlan, 
                     fecha_inicio:fechaMySQL ,
                 });
                 console.log('insertado con exito');
@@ -171,7 +189,7 @@ export default function Inversiones({ route }) {
             });
         } else {
             if(textInputValue){
-                navigation.navigate('Pasarela', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria,textInputValue:textInputValue });
+                navigation.navigate('Pasarela', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria,textInputValue:selectedAdditionalPlan });
             }else{
                 Alert.alert('Para continuar por favor introduce monto a invertir');
             }
@@ -255,17 +273,42 @@ export default function Inversiones({ route }) {
                 <View style={styles.textContainer}>
                     <Text style={styles.textDerecha}>Inversiones</Text>
                     <Text style={styles.textDerecha2}>Balance</Text>
-                    <Text style={styles.textDerecha1}>$ {(usuario.saldo || 0) + (affiliateBonus || 0)}</Text>
+                    <Text style={styles.textDerecha1}>$ {cuentaBancaria.saldo_afiliados}</Text>
                 </View>
             </View>
             <View style={styles.containerDivider}>
 
                 <View style={styles.divider} />
             </View>
-            <View style={styles.archivo}>
+            {/* <View style={styles.archivo}>
                 <Image source={require('../assets/archivo1.png')} style={styles.profileImage1} />
                 <Text style={{ color: 'white', marginLeft: 10 }}> Archivo Cargado </Text>
-            </View>
+            </View> */}
+             <View style={styles.picker}>
+      <Picker
+        selectedValue={selectedPlan}
+        onValueChange={(itemValue) => setSelectedPlan(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Seleccionar plan" value="" />
+        <Picker.Item label="STARTER" value="1" />
+        <Picker.Item label="AVANZADO" value="2" />
+        <Picker.Item label="PREMIER" value="3" />
+      </Picker>
+      <Picker
+        selectedValue={selectedAdditionalPlan}
+        onValueChange={(itemValue) => setSelectedAdditionalPlan(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Seleccionar plan adicional" value="" />
+        <Picker.Item label={`+200 USD (aprox. MXN ${calculateMXNValue(200)})`} value={calculateMXNValue(200)} />
+        <Picker.Item label={`+500 USD (aprox. MXN ${calculateMXNValue(500)})`} value={calculateMXNValue(500)} />
+        <Picker.Item label={`+1000 USD (aprox. MXN ${calculateMXNValue(1000)})`} value={calculateMXNValue(1000)} />
+        <Picker.Item label={`+2500 USD (aprox. MXN ${calculateMXNValue(2500)})`} value={calculateMXNValue(2500)} />
+        <Picker.Item label={`+5000 USD (aprox. MXN ${calculateMXNValue(5000)})`} value={calculateMXNValue(5000)} />
+        <Picker.Item label={`+10000 USD (aprox. MXN ${calculateMXNValue(10000)})`} value={calculateMXNValue(10000)} />
+      </Picker>
+    </View>
             <View style={styles.barradoble}>
                 <TextInput
                     style={styles.moneyBar}

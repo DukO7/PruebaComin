@@ -199,7 +199,7 @@ export default function Retirar({ route }) {
                     <View style={styles.textContainer}>
                         <Text style={styles.textDerecha}>RETIRAR</Text>
                         <Text style={styles.textDerecha2}>Balance</Text>
-                        <Text style={styles.textDerecha1}>$ {(usuario.saldo || 0) + (affiliateBonus || 0)}</Text>
+                        <Text style={styles.textDerecha1}>$ {cuentaBancaria.saldo_afiliados}</Text>
                     </View>
                 </View>
                 <View style={styles.containerDivider}>
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     cajaTexto: {
         paddingVertical: 17,
         backgroundColor: 'white',
-        borderRadius: 15,
+        borderRadius: 15,flex: 1,
         marginVertical: 10
     },
     header1: {
@@ -468,7 +468,11 @@ const styles = StyleSheet.create({
         bottom: 32
     },
     FatherBoton: {
+        flex:2,
         alignItems: 'center',
+        top:'45%',
+        left:'20%',
+        position:'absolute'
 
     },
     cajaBoton: {

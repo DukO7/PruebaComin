@@ -150,7 +150,7 @@ export default function Inversiones({ route }) {
 // };
     const handlePress3 = async () => {
         try {
-            if(textInputValue){
+            if(selectedAdditionalPlan){
                 setShowAlert(true);
                 const payment = await PaymentService.createPayment();
                 console.log(payment.data.init_point);
@@ -188,7 +188,7 @@ export default function Inversiones({ route }) {
                 cuentaBancaria: cuentaBancaria,
             });
         } else {
-            if(textInputValue){
+            if(selectedAdditionalPlan){
                 navigation.navigate('Pasarela', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria,textInputValue:selectedAdditionalPlan });
             }else{
                 Alert.alert('Para continuar por favor introduce monto a invertir');
@@ -221,17 +221,13 @@ export default function Inversiones({ route }) {
         setShowMenu(!showMenu);
     };
     const [imageError, setImageError] = useState(false);
-
-    
     return (
 
         <View style={styles.container}>
             <View style={styles.header1}>
-            
             <CustomAlert visible={showAlert} message="Redirigiendo..." />
                 <View style={styles.profileInfo}>
                     {imageError ? (
-                        
                         <Image
                             source={require("../assets/usuario1.jpg")}
                             style={styles.profileImage}
@@ -243,12 +239,11 @@ export default function Inversiones({ route }) {
                                 uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
                             }}
                             style={styles.profileImage}
-                            onError={() => setImageError(true)} 
+                            onError={() => setImageError(true)}
                         />
                     )}
                     <Text style={styles.textHeader1}>{usuario.nombre}</Text>
                 </View>
-                
                 <View style={styles.containermenu}>
                     <TouchableOpacity
                         style={styles.menuButton}
@@ -309,7 +304,7 @@ export default function Inversiones({ route }) {
         <Picker.Item label={`+10000 USD (aprox. MXN ${calculateMXNValue(10000)})`} value={calculateMXNValue(10000)} />
       </Picker>
     </View>
-            <View style={styles.barradoble}>
+            {/* <View style={styles.barradoble}>
                 <TextInput
                     style={styles.moneyBar}
                     onChangeText={setTextInputValue}
@@ -317,7 +312,7 @@ export default function Inversiones({ route }) {
                     placeholder="Monto a invertir"
                     keyboardType="numeric"
                 />
-            </View>
+            </View> */}
 
             <View style={styles.FatherBoton}>
 

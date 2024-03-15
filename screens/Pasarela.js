@@ -31,13 +31,14 @@ const Pasarela = ({ route }) => {
                     failure: "/failure",
                     pending: "/pending",
                     success: "http://localhost:8081/Inversiones"
-                }
+                },
+                auto_return:"approved",
             };
 
             const payment = await axios.post(url, body, {
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
+                    Authorization: `Bearer TEST-6676272883606931-030303-e2bd63f42733b12c4d2a1ec2e105725d-1708323573`
                 }
             });
 
@@ -49,7 +50,7 @@ const Pasarela = ({ route }) => {
             axios.get(url, {
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573`
+                Authorization: `Bearer TEST-6676272883606931-030303-e2bd63f42733b12c4d2a1ec2e105725d-1708323573`
               }
             }).then((response) => {
               const { status } = response.data;
@@ -71,18 +72,19 @@ const Pasarela = ({ route }) => {
             if(textInputValue){
                 setShowAlert(true);
                 const payment = await PaymentService.createPayment();
-                console.log(payment.data.init_point);
+                console.log(payment.data);
                 const timestamp = new Date().getTime();
                 const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
                 console.log('esta es la fecha que guardara:',timestamp);
-                await axios.post('http://192.168.1.72:3000/Act_inversion', {
-                    usuarioId: usuario.id,
-                    saldo: textInputValue, 
-                    fecha_inicio:fechaMySQL ,
-                });
-                console.log('insertado con exito');
+               
+                console.log('insertado con exito',payment.data.init_point);
                 await openBrowserAsync(payment.data.init_point);
                 PaymentService.checkPaymentStatus(payment.data.id);
+                await axios.post('http://192.168.1.72:3000/Act_inversion', {
+                  usuarioId: usuario.id,
+                  saldo: textInputValue, 
+                  fecha_inicio:fechaMySQL ,
+              });
                 console.log('datos recibidos',payment.data.id)
                 setShowAlert(false);
             }else{

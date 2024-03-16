@@ -92,9 +92,10 @@ export default function Login(props) {
                         await AsyncStorage.setItem("usuario", JSON.stringify(usuario));
                         console.log('datos recibidos de handleLogin', JSON.stringify(usuario));
                         console.log('datos del token recibidos o guarados', response.data.token);
-        
+                        console.log('datos recibidos porcentajes',usuario.porcentaje,usuario.porcentaje_afiliado);
                         // Verificar si el usuario tiene afiliados y actualizar su saldo
-                        const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado});
+                        const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado});
+                        console.log('datos recibidos porcentajes2',usuario.porcentaje,usuario.porcentaje_afiliado);
                         console.log('este dato se envia a update',usuario.codigo_afiliado);
                         const affiliateBonus= afiliados.data.affiliateBonus;
                         const datosafiliados = afiliados.data.datosafiliados;

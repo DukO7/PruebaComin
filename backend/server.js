@@ -386,11 +386,12 @@ app.post('/autenticacion-biometrica', (req, res) => {
 });
 
 app.post('/update-balance', (req, res) => {
-  const { usuarioId, codigoAfiliado } = req.body;
-
+  const { usuarioId, codigoAfiliado,porcentaje,porcentaje_afiliado } = req.body;
+  console.log('todo',req.body)
+  const porcentajeConvertido = porcentaje_afiliado / 100;
   console.log('usuarioId:', usuarioId);
   console.log('codigoAfiliado:', codigoAfiliado);
-
+  console.log('porcentaje_afiliado:', porcentajeConvertido);
   // Array para almacenar los datos de los afiliados
   let datosafiliados = [];
 
@@ -422,12 +423,12 @@ app.post('/update-balance', (req, res) => {
         // Iterar sobre los resultados y guardar los datos de los afiliados en el array
         for (const affiliate of results) {
           totalAffiliateBalance += affiliate.saldo;
-
           // Crear un objeto para cada afiliado con su id y saldo
           const afiliado = {
             id: affiliate.id,
             nombre: affiliate.nombre,
-            saldo: affiliate.saldo
+            saldo: affiliate.saldo,
+            bono:affiliate.saldo*0.05
           };
 
           // Agregar el objeto afiliado al array
@@ -435,8 +436,19 @@ app.post('/update-balance', (req, res) => {
         }
 
         // Calcular el 5% del saldo total de los afiliados
+        let affiliateBonus;
+
+if (porcentaje_afiliado === 6) {
+  // Si porcentaje_afiliado es igual a 6, multiplica por 0.06
+  affiliateBonus = totalAffiliateBalance * 0.06;
+} else if(porcentaje_afiliado === 7){
+  // Para otros valores de porcentaje_afiliado, multiplica por 0.05
+  affiliateBonus = totalAffiliateBalance * 0.071;
+}else if(porcentaje_afiliado === 9){
+  affiliateBonus = totalAffiliateBalance * 0.094;
+}
         console.log('esto es lo que sumo',totalAffiliateBalance);
-        const affiliateBonus = totalAffiliateBalance * 0.05;
+        
         console.log('esto es el bono de 0.05',affiliateBonus);
         const updateQuery = `
         UPDATE cuentas_bancarias AS cb
@@ -498,9 +510,9 @@ app.post('/update-balance', (req, res) => {
                 inversionesPorFecha[fecha].push(inversion);
               });
 
-              console.log('Resultados de la consulta SQL:', inversionesPorFecha);
+              //console.log('Resultados de la consulta SQL:', inversionesPorFecha);
               // Ahora tienes las inversiones organizadas por fecha en inversionesPorFecha
-
+              console.log('datos de afiliados:', datosafiliados);
               // Devolver el saldo total de los afiliados, el bono, los datos de los afiliados, las inversiones y los datos de la cuenta bancaria como una respuesta al cliente
               res.status(200).json({ message: 'Saldo actualizado exitosamente', totalAffiliateBalance, affiliateBonus, datosafiliados, inversionesPorFecha, cuenta });
             });
@@ -657,7 +669,7 @@ const saldoEntero = parseInt(saldoSinComa, 10);
         return;
       }
       const alerta = 1;
-      connection.query(query1,[usuarioId,saldo,'Retiro de cuenta',fecha_inicio])
+      connection.query(query1,[usuarioId,saldoEntero,'Retiro de cuenta',fecha_inicio])
       console.log("Datos del usuario verificacion curp exitoso:", results);
       res.status(200).json({ message: "Datos del usuario actualizados correctamente",alerta});
     });
@@ -1210,9 +1222,11 @@ app.post('/create-payment-intent2', async (req, res) => {
 
 app.post('/create-checkout-session', async (req, res) => {
   try {
-    const {amount} = req.body;
+    const { amount, id_usuario, porcentaje, afiliado } = req.body;
     console.log('Datos recibidos del cliente:', req.body);
     const unit_amount = amount + "00";
+    
+    // Crear sesión de pago
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -1226,17 +1240,29 @@ app.post('/create-checkout-session', async (req, res) => {
           quantity: 1,
         },
       ],
-      
       mode: "payment",
       success_url: "http://localhost:3000/success",
     });
-    console.log('datos despues del create:',session.url);
     
-    res.json({ url: session.url});
+    console.log('Datos después del create:', session.url);
+    console.log('Datos :', afiliado);
+    // Ejecutar consulta de actualización en la base de datos
+    const query = `UPDATE usuarios SET porcentaje=?, porcentaje_afiliado=? WHERE id=?`;
+    connection.query(query, [porcentaje, afiliado, id_usuario], (error, results) => {
+      if (error) {
+        console.error("Error al actualizar datos del usuario:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+        return;
+      }
+      console.log("Datos del usuario actualizados correctamente:", results);
+      res.status(200).json({ url: session.url, message: "Datos del usuario actualizados correctamente" });
+    });
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 const endpointSecret = "whsec_a3f2b80a59ed33450f0d762e87886bfd3e0481fbdfd7ae3bc18500ee18a0309c";
 
 app.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {

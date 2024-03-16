@@ -1,13 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { Text, StyleSheet, View, Image, TouchableOpacity, FlatList } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation,useIsFocused } from '@react-navigation/native';
 import CreditCardImage from '../assets/tarjeta.png'
 import SidebarModal from "./SidebarModal";
+import axios from 'axios';
 export default function Cartera({ route }) {
   const [dates, setDates] = useState([]);
   const [inversions, setInversions] = useState([]);
+  const isFocused = useIsFocused();
+  const [cuentaBancaria1, SetcuentaBancaria] = useState(0);
+  const navigation = useNavigation();
+  const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha } = route.params;
+  //console.log('esto estoy recibiendo en cuenta banco:', cuentaBancaria);
   useEffect(() => {
+    //llamada actualizado de componentes
+    const fetchData = async () => {
+      try {
+        if (usuario && isFocused) { // Verificar si el usuario está definido y la pantalla está enfocada
+          const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
+          SetcuentaBancaria(afiliados.data.cuenta);
+          console.log('Esto se recibe:', cuentaBancaria1);
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos:', error);
+      }
+    };
     const filterInversionsByType = (type) => {
       const filteredInversions = [];
       const filteredDates = Object.keys(inversionesPorFecha);
@@ -24,8 +42,9 @@ export default function Cartera({ route }) {
     } else {
       filterInversionsByType('Retiro de cuenta');
     }
-  }, [showDeposits, inversionesPorFecha]);
-
+    fetchData();
+  }, [showDeposits, inversionesPorFecha,isFocused]);
+  console.log('esto regresa cuentaBancaria1',cuentaBancaria1);
   const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
   const inversionsByDate = {};
   inversions.forEach(inversion => {
@@ -47,12 +66,10 @@ export default function Cartera({ route }) {
   const handlePress1 = (screen) => {
     console.log("Navigating to", screen);
     closeModal();
-    navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria });
+    navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 });
   };
 
-  const navigation = useNavigation();
-  const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria } = route.params;
-  console.log('esto estoy recibiendo en cuenta banco:', cuentaBancaria);
+
   const handlePress = (screenName) => {
     navigation.navigate(screenName);
   };
@@ -110,12 +127,12 @@ export default function Cartera({ route }) {
         <View style={styles.creditCard}>
           <Image source={CreditCardImage} style={styles.creditCardImage} />
           <Text style={styles.balanceText}>Balance</Text>
-          <Text style={styles.balanceAmount}>$ {cuentaBancaria.saldo_afiliados}</Text>
+          <Text style={styles.balanceAmount}>$ {cuentaBancaria1.saldo_afiliados}</Text>
           <View style={styles.cardContent}>
 
-            <Text style={styles.cardNameText}>{cuentaBancaria.nombre_cuenta}</Text>
+            <Text style={styles.cardNameText}>{cuentaBancaria1.nombre_cuenta}</Text>
           </View>
-          <Text style={styles.cardNumberText}>{cuentaBancaria.numero_tarjeta}</Text>
+          <Text style={styles.cardNumberText}>{cuentaBancaria1.numero_tarjeta}</Text>
         </View>
       </View>
 
@@ -174,15 +191,15 @@ export default function Cartera({ route }) {
         keyExtractor={(item, index) => index.toString()} // Clave única para cada elemento
       />
       <View style={styles.containernav}>
-        <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+        <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
           <Ionicons name="wallet" size={30} color="#7494b3" />
           <Text style={styles.textnavbar}>Cartera</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+        <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
           <Ionicons name="analytics" size={30} color="white" />
           <Text style={styles.textnavbar2}>Inversiones</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+        <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha })}>
           <Ionicons name="arrow-back" size={30} color="white" />
           <Text style={styles.textnavbar2}>Retirar</Text>
         </TouchableOpacity>

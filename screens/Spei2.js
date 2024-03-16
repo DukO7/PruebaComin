@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, {useState, useRef, useEffect } from "react";
+import { View, StyleSheet,BackHandler,Alert } from 'react-native';
 import WebView from 'react-native-webview';
-
+import { useNavigation,useIsFocused } from '@react-navigation/native';
 const WebViewComponent = (checkoutUrl) => {
+    const navigation = useNavigation();
     console.log('esto recibo',checkoutUrl.route.params.checkoutUrl);
     const removeDivsScript = `
   const headerImageDivToRemove = document.querySelector('.HeaderImage.HeaderImage--icon.HeaderImage--iconFallback.flex-item.width-fixed');
@@ -15,9 +16,41 @@ const WebViewComponent = (checkoutUrl) => {
     testModeDivToRemove.remove();
   }
 `;
+
+useEffect(() => {
+    const backAction = () => {
+      Alert.alert(
+        "¿Estás seguro?",
+        "¿Quieres cancelar el pago?",
+        [
+          {
+            text: "Cancelar",
+            onPress: () => null,
+            style: "cancel",
+          },
+          { text: "Sí", onPress: () => handleNavigateBack() },
+        ],
+        { cancelable: false }
+      );
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
+  const handleNavigateBack = () => {
+    // Aquí puedes agregar la navegación de regreso al login
+    console.log("Regresando al login...");
+    navigation.navigate("Pasarela");
+  };
   return (
     
     <View style={styles.container}>
+        
       <WebView
         source={{ uri:checkoutUrl.route.params.checkoutUrl }}
         style={styles.webview}

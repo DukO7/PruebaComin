@@ -1,7 +1,7 @@
 import React, { Component, useState,useEffect } from "react";
 import { Text, StyleSheet, View, Image, TouchableOpacity, Alert, Linking, TextInput } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation,useIsFocused } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
 import axios from 'axios';
 import { openBrowserAsync } from 'expo-web-browser';
@@ -11,7 +11,9 @@ import { Picker } from '@react-native-picker/picker';
 export default function Inversiones({ route }) {
     const [selectedPlan, setSelectedPlan] = useState('');
     const [selectedAdditionalPlan, setSelectedAdditionalPlan] = useState('');
-    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,} = route.params;
+    const [cuentaBancaria1, SetcuentaBancaria] = useState(0);
+    const isFocused = useIsFocused();
+    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha} = route.params;
     const [exchangeRates, setExchangeRates] = useState({});
     // const [updatedUser, setUpdatedUser] = useState(usuario);
     // useEffect(() => {
@@ -35,8 +37,21 @@ export default function Inversiones({ route }) {
     //   }, [usuario]);
     // console.log('son los datos que recibo:',updatedUser);
     useEffect(() => {
+        const fetchData = async () => {
+            try {
+              // Supongamos que obtienes el usuario de alguna manera
+              const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
+              SetcuentaBancaria (afiliados.data.cuenta);
+              console.log('Esto se recibe1:', cuentaBancaria1);
+            } catch (error) {
+              console.error('Error al obtener los datoss:', error);
+            }
+          };
+          fetchData();
         fetchExchangeRates();
-      }, []);
+
+
+      }, [isFocused]);
       const fetchExchangeRates = async () => {
         try {
           const response = await fetch('https://open.er-api.com/v6/latest/USD');
@@ -185,11 +200,11 @@ export default function Inversiones({ route }) {
                 affiliateBonus: affiliateBonus,
                 datosafiliados: datosafiliados,
                 inversionesPorFecha: inversionesPorFecha,
-                cuentaBancaria: cuentaBancaria,
+                cuentaBancaria: cuentaBancaria1,
             });
         } else {
-            if(selectedAdditionalPlan){
-                navigation.navigate('Pasarela', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria,textInputValue:selectedAdditionalPlan });
+            if(selectedPlan){
+                navigation.navigate('Pasarela', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1,textInputValue:selectedPlan,textInputValue1:selectedAdditionalPlan });
             }else{
                 Alert.alert('Para continuar por favor introduce monto a invertir');
             }
@@ -207,7 +222,7 @@ export default function Inversiones({ route }) {
     const handlePress1 = (screen) => {
         console.log("Navigating to", screen);
         closeModal(); 
-        navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria });
+        navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 });
     };
 
     const navigation = useNavigation();
@@ -268,7 +283,7 @@ export default function Inversiones({ route }) {
                 <View style={styles.textContainer}>
                     <Text style={styles.textDerecha}>Inversiones</Text>
                     <Text style={styles.textDerecha2}>Balance</Text>
-                    <Text style={styles.textDerecha1}>$ {cuentaBancaria.saldo_afiliados}</Text>
+                    <Text style={styles.textDerecha1}>$ {cuentaBancaria1.saldo_afiliados}</Text>
                 </View>
             </View>
             <View style={styles.containerDivider}>
@@ -286,9 +301,9 @@ export default function Inversiones({ route }) {
         style={styles.picker}
       >
         <Picker.Item label="Seleccionar plan" value="" />
-        <Picker.Item label="STARTER" value="1" />
-        <Picker.Item label="AVANZADO" value="2" />
-        <Picker.Item label="PREMIER" value="3" />
+        <Picker.Item label="STARTER" value={{ mxnValue: calculateMXNValue(500), additionalValue: 0.057,valorafiliado:0.06}} />
+        <Picker.Item label="AVANZADO" value={{ mxnValue: calculateMXNValue(1000), additionalValue: 7.3,valorafiliado:7.1 }} />
+        <Picker.Item label="PREMIER" value={{ mxnValue: calculateMXNValue(3500), additionalValue: 8.5,valorafiliado:9.4 }} />
       </Picker>
       <Picker
         selectedValue={selectedAdditionalPlan}
@@ -326,15 +341,15 @@ export default function Inversiones({ route }) {
 
             </View>
             <View style={styles.containernav}>
-                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
                     <Ionicons name="wallet" size={30} color="white"/>
                     <Text style={styles.textnavbar}>Cartera</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
                     <Ionicons name="analytics" size={30} color="#7494b3"/>
                     <Text style={styles.textnavbar2}>Inversiones</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha })}>
                     <Ionicons name="arrow-back" size={30} color="white"/>
                     <Text style={styles.textnavbar2}>Retirar</Text>
                 </TouchableOpacity>

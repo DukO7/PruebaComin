@@ -1,35 +1,35 @@
-import React, { Component, useState, useRef, useEffect } from "react";
+import React, {useState, useRef, useEffect } from "react";
 import { Text, StyleSheet, View, Image, TouchableOpacity, TextInput, Alert } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation,useIsFocused } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
 import axios from 'axios';
 import CustomAlert from './CustomAlert';
 import moment from 'moment';
 import differenceInDays from 'date-fns/differenceInDays';
 export default function Retirar({ route }) {
-    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria } = route.params;
+    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha} = route.params;
     const [cuentaBancaria1, SetcuentaBancaria] = useState(0);
     const [retiros, setRetiros] = useState(0);
+    const isFocused = useIsFocused();
+  
     useEffect(() => {
         const fetchData = async () => {
           try {
             // Supongamos que obtienes el usuario de alguna manera
-            const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado });
+            const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
             SetcuentaBancaria (afiliados.data.cuenta);
             console.log('Esto se recibe1:', cuentaBancaria1);
           } catch (error) {
             console.error('Error al obtener los datoss:', error);
           }
         };
-    
         fetchData();
-    
         // Si necesitas que este efecto se ejecute solo una vez al montar el componente,
         // puedes pasar un array vacío como segundo argumento de useEffect.
         // Si necesitas que se ejecute cada vez que cambie alguna dependencia,
         // puedes pasar las dependencias como segundo argumento de useEffect.
-      }, [retiros]);
+      }, [retiros,isFocused]);
     const handleInvertirClick = () => {
         const currentDate = new Date();
         const userCreationDate = new Date(usuario.fecha_creacion);
@@ -42,7 +42,7 @@ export default function Retirar({ route }) {
         const accountCreationDate = new Date(usuario.fecha_creacion);
 
         // Calcular la diferencia en milisegundos entre la fecha actual y la fecha de creación de la cuenta
-        const differenceInMilliseconds = currentDate.getTime() - accountCreationDate.getTime();
+        //const differenceInMilliseconds = currentDate.getTime() - accountCreationDate.getTime();
     
         // Calcular la diferencia en días
         // const differenceInDays = differenceInMilliseconds / (1000 * 3600 * 24);
@@ -53,7 +53,7 @@ export default function Retirar({ route }) {
                 'Verificación requerida',
                 'Para realizar este proceso, primero debe verificar su cuenta.',
                 [
-                    { text: 'OK', onPress: () => navigation.navigate('IneyCurp', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria }) }
+                    { text: 'OK', onPress: () => navigation.navigate('IneyCurp', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 }) }
                 ]
             );
         } else if (daysSinceCreation < 3) {
@@ -65,7 +65,28 @@ export default function Retirar({ route }) {
             );
         } else {
             // Si la cuenta está verificada y tiene al menos 3 días de antigüedad, proceder con el retiro
-            handleRetirar();
+            if(amount){
+            Alert.alert(
+      'Retirar',
+      `¿Estas seguro que deseas retirar? $${amount}`,
+      [
+        {
+          text: 'Si',
+          onPress: handleRetirar,
+        },
+        {
+          text: 'No',
+          onPress: () => Alert.alert('Retiro cancelado'),
+        style: 'cancel',
+        },
+      ],
+      {
+        cancelable: true,
+      }
+    );
+            }else {
+                Alert.alert("No haz insertado monto a retirar");
+              }
         }
     };
     
@@ -88,7 +109,7 @@ export default function Retirar({ route }) {
     const handlePress1 = (screen) => {
         console.log("Navigating to", screen);
         closeModal(); // Cierra el SidebarModal después de presionar un elemento
-        navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria });
+        navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1});
     };
 
     useEffect(() => {
@@ -161,15 +182,15 @@ export default function Retirar({ route }) {
             
             console.log('fue un exito',datos.data.alerta);
             setRetiros(retiros + 1);
-            if(datos.data.alerta==1){
-                setShowAlert(false);
-                Alert.alert('Monto retirado exitosamente')
+            if (datos.data.alerta == 1) {
+                setTimeout(() => {
+                  setShowAlert(false);
+                  Alert.alert("Monto retirado exitosamente");
+                }, 2000);
+              }
+            } else {
+              Alert.alert("No haz insertado monto a retirar");
             }
-            
-        }
-        else{
-            Alert.alert('No haz insertado monto a retirar');
-        }
       }
     
     return (
@@ -238,12 +259,11 @@ export default function Retirar({ route }) {
                         }}
                         value={amount}
                     />
-                    <Image source={require('../assets/moneda.png')} style={styles.iconoUsuario} />
+                    <Image source={require('../assets/moneda.png')} style={styles.iconoUsuario}/>
                     <Text style={styles.moneyText1}>  Monto A Retirar </Text>
                 </View>
                 <View style={styles.FatherBoton}>
                     <TouchableOpacity style={styles.cajaBoton} >
-
                         <Text style={styles.TextoBoton} onPress={handleInvertirClick}>
                             Retirar
                         </Text>
@@ -251,15 +271,15 @@ export default function Retirar({ route }) {
                 </View>
                 </View>
                 <View style={styles.containernav}>
-                    <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                    <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
                         <Ionicons name="wallet" size={30} color="white" />
                         <Text style={styles.textnavbar}>Cartera</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                    <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
                         <Ionicons name="analytics" size={30} color="white" />
                         <Text style={styles.textnavbar2}>Inversiones</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
+                    <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
                         <Ionicons name="arrow-back" size={30} color="#7494b3" />
                         <Text style={styles.textnavbar2}>Retirar</Text>
                     </TouchableOpacity>

@@ -7,7 +7,9 @@ import axios from 'axios';
 import moment from 'moment';
 import { openBrowserAsync } from 'expo-web-browser';
 const Pasarela = ({ route }) => {
-    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,textInputValue} = route.params;
+    const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,textInputValue,textInputValue1} = route.params;
+    console.log('esto estoy recibiendo de seleccion',textInputValue);
+    console.log('esto estoy recibiendo de seleccion2',textInputValue1);
     const navigation = useNavigation();
     const [checkoutUrl, setCheckoutUrl] = useState(null);
     const [showAlert, setShowAlert] = useState(false);
@@ -24,7 +26,7 @@ const Pasarela = ({ route }) => {
                         picture_url: "http://www.myapp.com/myimage.jpg",
                         category_id: "services",
                         quantity: 1,
-                        unit_price: parseFloat(textInputValue)
+                        unit_price: parseFloat(textInputValue.mxnValue)
                     }
                 ],
                 back_urls: {
@@ -46,7 +48,6 @@ const Pasarela = ({ route }) => {
         },
         checkPaymentStatus(preferenceId) {
             const url = `https://api.mercadopago.com/checkout/preferences/${preferenceId}`;
-        
             axios.get(url, {
               headers: {
                 "Content-Type": "application/json",
@@ -72,7 +73,7 @@ const Pasarela = ({ route }) => {
             if(textInputValue){
                 setShowAlert(true);
                 const payment = await PaymentService.createPayment();
-                console.log(payment.data);
+                console.log(payment.data.init_point);
                 const timestamp = new Date().getTime();
                 const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
                 console.log('esta es la fecha que guardara:',timestamp);
@@ -152,7 +153,10 @@ const Pasarela = ({ route }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: textInputValue,
+          id_usuario:usuario.id,
+          amount: textInputValue.mxnValue+textInputValue1,
+          porcentaje:textInputValue.additionalValue,
+          afiliado:textInputValue.valorafiliado,
           currency: 'mxn',
           paymentMethodType: 'card',
           paymentMethod: 'pm_card_visa',
@@ -163,8 +167,6 @@ const Pasarela = ({ route }) => {
       setCheckoutUrl(data.url);
       console.log('esto recibo de await',data.url);
       navigation.navigate('Spei2',{usuario,checkoutUrl:data.url})
-      
-      
     };
   return (
     <View style={styles.container}>

@@ -152,7 +152,11 @@ export default function Afiliados({ route }) {
           </View>
       <View style={styles.moneyBar}>
         {/* Mostrar el nombre del afiliado */}
-        <Text>{afiliado.nombre}</Text>
+        <Text style={{color:'white'}}>{afiliado.nombre}</Text>
+      </View>
+      <View style={styles.moneyBar1}>
+        {/* Mostrar el nombre del afiliado */}
+        <Text style={{color:'white'}}>{Math.round(afiliado.bono * 100) / 100}</Text>
       </View>
     </View>
   ))}
@@ -200,7 +204,7 @@ const styles = StyleSheet.create({
     barradoble:{
         flexDirection: 'row',
         alignItems: 'center',
-        left:50,
+        left:20,
 
     },
     container: {
@@ -433,6 +437,26 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         width: 150,
         marginLeft: 20,
+        borderColor: 'black', // Color del borde verde oscuro
+        borderRadius: 10,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        marginVertical: 20,
+        alignSelf: 'center', // Alinear al centro horizontalmente
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+      },
+      moneyBar1: {
+        backgroundColor: '#7171B3', // Color de fondo verde
+        borderWidth: 1,
+        width: 120,
+        marginLeft: 10,
         borderColor: 'black', // Color del borde verde oscuro
         borderRadius: 10,
         paddingHorizontal: 20,

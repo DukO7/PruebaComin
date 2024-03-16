@@ -2,7 +2,7 @@ import React, {useState, useRef, useEffect } from "react";
 import { View, StyleSheet,BackHandler,Alert } from 'react-native';
 import WebView from 'react-native-webview';
 import { useNavigation,useIsFocused } from '@react-navigation/native';
-const WebViewComponent = (checkoutUrl) => {
+const WebViewComponent = (checkoutUrl,usuario) => {
     const navigation = useNavigation();
     console.log('esto recibo',checkoutUrl.route.params.checkoutUrl);
     const removeDivsScript = `
@@ -45,7 +45,7 @@ useEffect(() => {
   const handleNavigateBack = () => {
     // Aquí puedes agregar la navegación de regreso al login
     console.log("Regresando al login...");
-    navigation.navigate("Pasarela");
+    navigation.navigate("Pasarela",{usuario:usuario});
   };
   return (
     

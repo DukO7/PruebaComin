@@ -135,7 +135,6 @@ const storage3 = multer.diskStorage({
   }
 });
 
-
 const documentos_curp = multer({ storage: storage3 });
 app.use('/documentos_curp', express.static(path.join(__dirname, 'documentos_curp')));
 app.post('/documentos_curp', documentos_curp.single('Documento'), (req, res) => {
@@ -320,14 +319,40 @@ app.post('/login', (req, res) => {
               res.status(500).json({ error: 'Error interno del servidor al obtener la fecha del último retiro' });
               return;
             }
-            
+            const fechaActual = new Date();
+            const diaActual = fechaActual.getDate();
+            const fechaCreacionUsuario = new Date(usuario.fecha_creacion);
+            console.log('datos de creacion:',usuario.fecha_creacion);
+            const mesesTranscurridos = (fechaActual.getFullYear() - fechaCreacionUsuario.getFullYear()) * 12 + fechaActual.getMonth() - fechaCreacionUsuario.getMonth();
             const ultimaFechaRetiro = results[0].ultima_fecha_retiro;
             console.log('Fecha del último retiro:', ultimaFechaRetiro);
-            const diasTranscurridos = ultimaFechaRetiro ? Math.floor((new Date() - new Date(ultimaFechaRetiro)) / (1000 * 60 * 60 * 24)) : null;
+            const diasTranscurridos = usuario.fecha_creacion ? Math.floor((new Date() - new Date(usuario.fecha_creacion)) / (1000 * 60 * 60 * 24)) : null;
             console.log('dias de retiro:', diasTranscurridos);
-            if (diasTranscurridos === null || diasTranscurridos > 15) {
+            console.log('dias transcurridos:', diaActual);
+            console.log('Meses transcurridos:', mesesTranscurridos);
+            let nuevoValorActualizadoSaldo;
+
+            if (mesesTranscurridos >= 1) {
+              nuevoValorActualizadoSaldo = 0;
+            } else {
+              nuevoValorActualizadoSaldo = 1;
+            }
+
+            if (diaActual>= 1) {
               // Actualizar el campo actualizado_saldo en la tabla usuarios
+              console.log('dias para actulizar',nuevoValorActualizadoSaldo);
               const queryActualizarSaldo = 'UPDATE usuarios SET actualizado_saldo = 0 WHERE id = ?';
+              connection.query(queryActualizarSaldo, [usuario.id], (err, results) => {
+                if (err) {
+                  console.error('Error al actualizar el campo actualizado_saldo:', err);
+                  res.status(500).json({ error: 'Error interno del servidor al actualizar el campo actualizado_saldo' });
+                  return;
+                }
+              });
+            }else {
+              // Actualizar el campo actualizado_saldo en la tabla usuarios
+              console.log('dias para actulizar',nuevoValorActualizadoSaldo);
+              const queryActualizarSaldo = 'UPDATE usuarios SET actualizado_saldo = 1 WHERE id = ?';
               connection.query(queryActualizarSaldo, [usuario.id], (err, results) => {
                 if (err) {
                   console.error('Error al actualizar el campo actualizado_saldo:', err);
@@ -434,7 +459,17 @@ app.post('/update-balance', (req, res) => {
           // Agregar el objeto afiliado al array
           datosafiliados.push(afiliado);
         }
+        const querybono = 'SELECT saldo FROM usuarios WHERE  id = ?';
+connection.query(querybono, [usuarioId], (err, results1) => {
+  if (err) {
+    console.error('Error al realizar la consulta del bono:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+    return;
+  }
 
+  // Ahora, results contendrá el resultado de la consulta
+  console.log('Resultado para bono:', results1[0].saldo);
+ let saldobono= results1[0].saldo;
         // Calcular el 5% del saldo total de los afiliados
         let affiliateBonus;
 
@@ -446,10 +481,29 @@ if (porcentaje_afiliado === 6) {
   affiliateBonus = totalAffiliateBalance * 0.071;
 }else if(porcentaje_afiliado === 9){
   affiliateBonus = totalAffiliateBalance * 0.094;
+}else{
+  affiliateBonus=0
 }
+
+let bonoplan;
+
+if (porcentaje === 6) {
+  bonoplan = saldobono * 0.057;
+} else if(porcentaje_afiliado === 7){
+  bonoplan = saldobono * 0.073;
+}else if(porcentaje_afiliado === 8){
+  bonoplan = saldobono * 0.084;
+}else{
+  bonoplan = 0
+}
+        console.log('porcentaje',porcentaje);
         console.log('esto es lo que sumo',totalAffiliateBalance);
-        
         console.log('esto es el bono de 0.05',affiliateBonus);
+        console.log('esto es el bono del plan:',bonoplan);
+        const sumabonos= bonoplan+affiliateBonus;
+        const factor = Math.pow(10, 2);
+        const resultado = Math.round(sumabonos * factor) / factor;
+        console.log('Suma:',resultado);
         const updateQuery = `
         UPDATE cuentas_bancarias AS cb
         JOIN usuarios AS u ON cb.id_usuario = u.id
@@ -460,8 +514,9 @@ if (porcentaje_afiliado === 6) {
             END
         WHERE u.id = ?;
         `;
-
-        connection.query(updateQuery, [affiliateBonus, usuarioId], (err, results) => {
+        
+          console.log('si hay dato que ver',porcentaje);
+          connection.query(updateQuery, [resultado, usuarioId], (err, results) => {
           if (err) {
             console.error('Error al actualizar el saldo en cuentas_bancarias:', err);
             res.status(500).json({ error: 'Error interno del servidor' });
@@ -515,6 +570,7 @@ if (porcentaje_afiliado === 6) {
               console.log('datos de afiliados:', datosafiliados);
               // Devolver el saldo total de los afiliados, el bono, los datos de los afiliados, las inversiones y los datos de la cuenta bancaria como una respuesta al cliente
               res.status(200).json({ message: 'Saldo actualizado exitosamente', totalAffiliateBalance, affiliateBonus, datosafiliados, inversionesPorFecha, cuenta });
+            });
             });
           });
         });
@@ -628,24 +684,37 @@ app.post("/actualizar_verificado_curp", (req, res) => {
 
 
 app.post("/Act_inversion", (req, res) => {
-  const { usuarioId, saldo,fecha_inicio } = req.body;
+  const { usuarioId, saldo, fecha_inicio } = req.body;
 
-  // Query para actualizar los datos en la base de datos
-  const query = `UPDATE usuarios SET saldo=saldo+? WHERE id=?`;
-  const query1 =`INSERT INTO inversiones (id_usuario, cantidad, descripcion, fecha_inicio) VALUES (?, ?, ?, ?)`;
-  // Ejecutar la consulta
-  connection.query(query, [saldo, usuarioId], (error, results) => {
-    if (error) {
-      
-      console.error("Error al actualizar datos del usuario:", error);
+  // Query para actualizar los datos en la tabla usuarios
+  const queryUsuarios = `UPDATE usuarios SET saldo = saldo + ? WHERE id = ?`;
+  // Query para actualizar los datos en la tabla cuentas_bancarias
+  const queryCuentasBancarias = `UPDATE cuentas_bancarias SET saldo_afiliados = saldo_afiliados + ? WHERE id_usuario = ?`;
+
+  // Ejecutar la consulta para actualizar datos en la tabla usuarios
+  connection.query(queryUsuarios, [saldo, usuarioId], (errorUsuarios, resultsUsuarios) => {
+    if (errorUsuarios) {
+      console.error("Error al actualizar datos del usuario:", errorUsuarios);
       res.status(500).json({ error: "Error interno del servidor" });
       return;
     }
-    connection.query(query1,[usuarioId,saldo,'Transferencia SPEI',fecha_inicio])
-    console.log("Datos del usuario verificacion curp exitoso:", results);
-    res.status(200).json({ message: "Datos del usuario actualizados correctamente" });
+
+    // Ejecutar la consulta para actualizar datos en la tabla cuentas_bancarias
+    connection.query(queryCuentasBancarias, [saldo, usuarioId], (errorCuentasBancarias, resultsCuentasBancarias) => {
+      if (errorCuentasBancarias) {
+        console.error("Error al actualizar datos en cuentas bancarias:", errorCuentasBancarias);
+        res.status(500).json({ error: "Error interno del servidor" });
+        return;
+      }
+
+      // Si ambas consultas se ejecutan correctamente, enviar una respuesta exitosa
+      console.log("Datos actualizados en usuarios:", resultsUsuarios);
+      console.log("Datos actualizados en cuentas bancarias:", resultsCuentasBancarias);
+      res.status(200).json({ message: "Datos actualizados correctamente en usuarios y cuentas bancarias" });
+    });
   });
 });
+
 
 app.post("/Retirar", (req, res) => {
   
@@ -657,8 +726,7 @@ const saldoEntero = parseInt(saldoSinComa, 10);
     const query = `UPDATE usuarios AS u
     JOIN cuentas_bancarias AS cb ON u.id = cb.id_usuario
     SET u.saldo = cb.saldo_afiliados - ?,
-        cb.saldo_afiliados = cb.saldo_afiliados - ?,
-        u.actualizado_saldo= 1
+        cb.saldo_afiliados = cb.saldo_afiliados - ?
     WHERE u.id = ?`;
     const query1 =`INSERT INTO inversiones (id_usuario, cantidad, descripcion, fecha_inicio) VALUES (?, ?, ?, ?)`;
     // Ejecutar la consulta
@@ -1243,7 +1311,6 @@ app.post('/create-checkout-session', async (req, res) => {
       mode: "payment",
       success_url: "http://localhost:3000/success",
     });
-    
     console.log('Datos después del create:', session.url);
     console.log('Datos :', afiliado);
     // Ejecutar consulta de actualización en la base de datos

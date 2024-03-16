@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   BackHandler,
-
+  Linking
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -62,7 +62,32 @@ export default function Home({ route }) {
       backAction
     );
 
-    return () => backHandler.remove();
+    const handleCustomScheme = async (url) => {
+      // Lógica para manejar los esquemas personalizados
+      if (url.startsWith('tuapp://checkout/success')) {
+        // Manejar compra exitosa
+      } else if (url.startsWith('tuapp://checkout/failure')) {
+        // Manejar compra fallida
+      } else if (url.startsWith('tuapp://stripe/success')) {
+        // Manejar pago exitoso de Stripe
+      } else if (url.startsWith('tuapp://stripe/cancel')) {
+        navigation.navigate("Cancel");
+      }
+    };
+    const handleIncomingLink = ({ url }) => {
+      handleCustomScheme(url);
+    };
+    Linking.addEventListener('url', handleIncomingLink);
+
+    // Verificar y manejar el enlace inicial al inicio de la aplicación
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleCustomScheme(url);
+      }
+    });
+
+    return () => {backHandler.remove();
+      Linking.removeEventListener('url', handleIncomingLink);}
   }, []);
 
   const handleNavigateBack = () => {

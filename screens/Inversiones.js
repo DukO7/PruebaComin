@@ -301,8 +301,8 @@ export default function Inversiones({ route }) {
         style={styles.picker}
       >
         <Picker.Item label="Seleccionar plan" value="" />
-        <Picker.Item label="STARTER" value={{ mxnValue: calculateMXNValue(500), additionalValue: 0.057,valorafiliado:0.06}} />
-        <Picker.Item label="AVANZADO" value={{ mxnValue: calculateMXNValue(1000), additionalValue: 7.3,valorafiliado:7.1 }} />
+        <Picker.Item label="STARTER" value={{ mxnValue: calculateMXNValue(500), additionalValue: 5.7,valorafiliado:6}} />
+        <Picker.Item label="AVANZADO" value={{ mxnValue: calculateMXNValue(1000), additionalValue:7.3,valorafiliado:7.1 }} />
         <Picker.Item label="PREMIER" value={{ mxnValue: calculateMXNValue(3500), additionalValue: 8.5,valorafiliado:9.4 }} />
       </Picker>
       <Picker

@@ -8,8 +8,8 @@ import moment from 'moment';
 import { openBrowserAsync } from 'expo-web-browser';
 const Pasarela = ({ route }) => {
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,textInputValue,textInputValue1} = route.params;
-    console.log('esto estoy recibiendo de seleccion',textInputValue);
-    console.log('esto estoy recibiendo de seleccion2',textInputValue1);
+    console.log('esto estoy recibiendo de plan',textInputValue);
+    console.log('esto estoy recibiendo de adicional',textInputValue1);
     const navigation = useNavigation();
     const [checkoutUrl, setCheckoutUrl] = useState(null);
     const [showAlert, setShowAlert] = useState(false);
@@ -163,10 +163,17 @@ const Pasarela = ({ route }) => {
           confirm: true
         })
       });
+      const timestamp = new Date().getTime();
+                const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+      await axios.post('http://192.168.1.72:3000/Act_inversion', {
+                  usuarioId: usuario.id,
+                  saldo: textInputValue.mxnValue+textInputValue1, 
+                  fecha_inicio:fechaMySQL ,
+              });
       const data = await res.json();
       setCheckoutUrl(data.url);
       console.log('esto recibo de await',data.url);
-      navigation.navigate('Spei2',{usuario,checkoutUrl:data.url})
+      navigation.navigate('Spei2',{usuario:usuario,checkoutUrl:data.url})
     };
   return (
     <View style={styles.container}>

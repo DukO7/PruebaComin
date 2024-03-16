@@ -125,8 +125,6 @@ export default function Afiliados({ route }) {
   <View style={{flex: 1,height:10}}>
   <Text style={{ alignItems: 'center', left: 135, fontSize: 22, top: 20 }}>Tus afiliados</Text>
   </View>
-  
-
   {/* Iterar sobre los afiliados y mostrar su información */}
   <ScrollView style={{height: '45%', marginBottom:40}}>
   {datosafiliados.map((afiliado, index) => (

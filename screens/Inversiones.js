@@ -8,6 +8,7 @@ import { openBrowserAsync } from 'expo-web-browser';
 import CustomAlert from './CustomAlert';
 import moment from 'moment';
 import { Picker } from '@react-native-picker/picker';
+import { Skeleton } from '@rneui/themed';
 export default function Inversiones({ route }) {
     const [selectedPlan, setSelectedPlan] = useState('');
     const [selectedAdditionalPlan, setSelectedAdditionalPlan] = useState('');
@@ -15,6 +16,7 @@ export default function Inversiones({ route }) {
     const isFocused = useIsFocused();
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha} = route.params;
     const [exchangeRates, setExchangeRates] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
     // const [updatedUser, setUpdatedUser] = useState(usuario);
     // useEffect(() => {
     //     const fetchUserData = async () => {
@@ -50,8 +52,13 @@ export default function Inversiones({ route }) {
           fetchData();
         fetchExchangeRates();
 
-
+        const timeout = setTimeout(() => {
+            setIsLoading(false);
+          }, 2000);
+          return () => clearTimeout(timeout);
       }, [isFocused]);
+
+
       const fetchExchangeRates = async () => {
         try {
           const response = await fetch('https://open.er-api.com/v6/latest/USD');
@@ -236,9 +243,138 @@ export default function Inversiones({ route }) {
         setShowMenu(!showMenu);
     };
     const [imageError, setImageError] = useState(false);
-    return (
 
-        <View style={styles.container}>
+    const SkeletonScreen = ()=>{
+        return(
+            <View style={styles.container}>
+            <View style={styles.header1}>
+            <CustomAlert visible={showAlert} message="Redirigiendo..." />
+                <View style={styles.profileInfo}>
+                <Skeleton
+    circle width={40} height={40}
+    style={styles.profileImage}
+  />
+  <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textHeader1}
+  />
+                </View>
+                <View style={styles.containermenu}>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        onPress={() => {
+                            if (isModalVisible) {
+                                
+                                closeModal();
+                            } else {
+                                
+                                openModal();
+                            }
+                        }}
+                    >
+                        <Ionicons name="menu" size={30} color="white" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+
+
+            <View style={styles.containerdatos}>
+                <View style={styles.textContainer}>
+                <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha}
+  />
+<Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha2}
+  />
+          <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha1}
+  />          
+                    
+                </View>
+            </View>
+            <View style={styles.containerDivider}>
+
+                <View style={styles.divider} />
+            </View>
+            {/* <View style={styles.archivo}>
+                <Image source={require('../assets/archivo1.png')} style={styles.profileImage1} />
+                <Text style={{ color: 'white', marginLeft: 10 }}> Archivo Cargado </Text>
+            </View> */}
+             <View style={styles.picker}>
+             <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.picker}
+  />  
+        <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.picker}
+  />  
+    </View>
+            {/* <View style={styles.barradoble}>
+                <TextInput
+                    style={styles.moneyBar}
+                    onChangeText={setTextInputValue}
+                    value={textInputValue}
+                    placeholder="Monto a invertir"
+                    keyboardType="numeric"
+                />
+            </View> */}
+
+            <View style={styles.FatherBoton}>
+
+               
+                <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.cajaBoton}
+  />  
+              
+            </View>
+            <View style={styles.containernav}>
+                <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
+                    <Ionicons name="wallet" size={30} color="white"/>
+                    <Text style={styles.textnavbar}>Cartera</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.centerIcon} onPress={() => navigation.navigate('Inversiones', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
+                    <Ionicons name="analytics" size={30} color="#7494b3"/>
+                    <Text style={styles.textnavbar2}>Inversiones</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.rightIcon} onPress={() => navigation.navigate('Retirar', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha })}>
+                    <Ionicons name="arrow-back" size={30} color="white"/>
+                    <Text style={styles.textnavbar2}>Retirar</Text>
+                </TouchableOpacity>
+            </View>
+            <SidebarModal
+                isVisible={isModalVisible}
+                onClose={closeModal} 
+                onPress={handlePress1} 
+                usuario={usuario}
+            />
+        </View>
+        );
+    }
+
+
+    const MainScreen = ()=>{
+        return(
+            <View style={styles.container}>
             <View style={styles.header1}>
             <CustomAlert visible={showAlert} message="Redirigiendo..." />
                 <View style={styles.profileInfo}>
@@ -361,6 +497,14 @@ export default function Inversiones({ route }) {
                 usuario={usuario}
             />
         </View>
+        );
+    }
+    return (
+
+        <View style={{ flex: 1 }}>
+        {isLoading ? <SkeletonScreen /> : null}
+        {!isLoading && <MainScreen />}
+      </View>
     )
 }
 
@@ -378,6 +522,14 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginTop: 30,
     },
+    picker: {
+        width: '100%',
+        marginBottom: 20,
+        borderColor: '#ccc',
+        borderRadius: 10,
+        
+      },
+     
     barradoble: {
         alignItems: 'center',
         right: 20
@@ -608,7 +760,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         paddingVertical: 20,
         width: 230,
-        marginTop: 20
+        marginTop: 50
     },
     TextoBoton: {
         textAlign: 'center',

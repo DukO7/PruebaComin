@@ -10,15 +10,16 @@ import {
   Linking
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation,useIsFocused } from "@react-navigation/native";
 import LastConnection from "../backend/LastConnection";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import SidebarModal from "./SidebarModal";
+import { Skeleton } from '@rneui/themed';
 export default function Home({ route }) {
-
+  const isFocused = useIsFocused();
     const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
-
+    const [isLoading, setIsLoading] = useState(true);
   const openModal = () => {
     setIsModalVisible(true);
   };
@@ -74,21 +75,26 @@ export default function Home({ route }) {
         navigation.navigate("Cancel");
       }
     };
-    const handleIncomingLink = ({ url }) => {
-      handleCustomScheme(url);
-    };
-    Linking.addEventListener('url', handleIncomingLink);
+    // const handleIncomingLink = ({ url }) => {
+    //   handleCustomScheme(url);
+    // };
+    // Linking.addEventListener('url', handleIncomingLink);
 
-    // Verificar y manejar el enlace inicial al inicio de la aplicación
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        handleCustomScheme(url);
-      }
-    });
+    // // Verificar y manejar el enlace inicial al inicio de la aplicación
+    // Linking.getInitialURL().then((url) => {
+    //   if (url) {
+    //     handleCustomScheme(url);
+    //   }
+    // });
+    // return () => {backHandler.remove();
+    //   Linking.removeEventListener('url', handleIncomingLink);}
 
-    return () => {backHandler.remove();
-      Linking.removeEventListener('url', handleIncomingLink);}
-  }, []);
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [isFocused]);
+
 
   const handleNavigateBack = () => {
     // Aquí puedes agregar la navegación de regreso al login
@@ -181,43 +187,20 @@ export default function Home({ route }) {
   const handleSidebarClose = () => {
     setIsSidebarVisible(false);
   };
-  return (
-    <View style={{ flex: 1 }}>
+  const SkeletonScreen = () => {
+    return (
+      <View style={{ flex: 1 }}>
       <View style={styles.container}>
-        {/* Sección de perfil */}
         <View style={styles.header1}>
-          {/* Aquí puedes personalizar el contenido del header */}
-          {/* <View style={styles.containermenu} >
-                    <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-
-                        <Ionicons name="menu" size={30} color="white" />
-                    </TouchableOpacity>
-                    {showMenu && (
-                        <View style={styles.overlay}>
-                            <View style={styles.menu}>
-                                <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Home', { usuario: usuario })}>
-                                    <Text style={styles.menuText}>Mis datos</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.menuItem}
-                                    onPress={onPressLogout}
-                                >
-                                    <Text style={styles.menuText}>Cerrar sesion</Text>
-                                </TouchableOpacity>
-
-                            </View>
-                        </View>
-                    )}
-                </View> */}
           <TouchableOpacity
-  style={styles.menuButton}
-  onPress={() => {
-    if (isModalVisible) {
-      // Si el modal está abierto, ciérralo
-      closeModal();
-    } else {
-      // Si el modal está cerrado, ábrelo
-      openModal();
+          style={styles.menuButton}
+          onPress={() => {
+          if (isModalVisible) {
+          // Si el modal está abierto, ciérralo
+          closeModal();
+          } else {
+          // Si el modal está cerrado, ábrelo
+          openModal();
     }
   }}
 >
@@ -227,22 +210,7 @@ export default function Home({ route }) {
         </View>
 
         <View style={styles.profileSection}>
-          {imageError ? (
-            // Mostrar un icono en lugar de la imagen si hay un error
-            <Image
-              source={require("../assets/usuario1.jpg")}
-              style={styles.profileImage}
-            />
-          ) : (
-            // Intenta cargar la imagen
-            <Image
-              source={{
-                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
-              }}
-              style={styles.profileImage}
-              onError={() => setImageError(true)} // Manejar error de carga de imagen
-            />
-          )}
+        <Skeleton circle width={40} height={40} style={styles.profileImage}/>
           <TouchableOpacity
             onPress={handleFileChange}
             style={styles.profileImage2}
@@ -250,28 +218,37 @@ export default function Home({ route }) {
             <Ionicons name="camera" size={30} color="white" />
           </TouchableOpacity>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileTitle}>PERFIL</Text>
-
-            <Text style={styles.profileName}>
-              {usuario.nombre
-                .split(" ")
-                .slice(0, 2)
-                .concat(
-                  usuario.nombre
-                    .split(" ")
-                    .slice(2)
-                    .map((word) => word[0])
-                )
-                .join(" ")}
-            </Text>
-            <LastConnection />
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.profileTitle}
+  />
+            <Skeleton
+    animation="wave"
+    width={170}
+    height={30}
+    style={styles.profileName}
+  />
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    
+  />
           </View>
         </View>
-
+        
         {/* Linea */}
         <View style={styles.containerDivider}>
           <View style={styles.textDivider}>
-            <Text>DATOS DE TU CUENTA</Text>
+          <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
+           
+  
           </View>
           <View style={styles.divider} />
         </View>
@@ -280,29 +257,51 @@ export default function Home({ route }) {
         <View style={{ justifyContent: "flex-start", flex: 1 }}>
           <View style={styles.containerdatos}>
             <View style={styles.textContainer}>
-              <Text style={styles.text}>Cuenta</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
             <View style={styles.line}></View>
             <View style={styles.textContainer1}>
-              <Text style={styles.textDerecha}>{cuentaBancaria.nombre_cuenta}</Text>
+              <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.textDerecha}
+  />
             </View>
           </View>
 
           <View style={styles.containerdatos}>
             <View style={styles.textContainer}>
-              <Text style={styles.text}>No. De Cnta</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
 
             <View style={styles.line}></View>
             <View style={styles.textContainer1}>
-              <Text style={styles.textDerecha}>{cuentaBancaria.numero_tarjeta}</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.textDerecha}
+  />
             </View>
           </View>
 
           {/* Linea */}
           <View style={styles.containerDivider}>
             <View style={styles.textDivider}>
-              <Text>DATOS GENERALES</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
             <View style={styles.divider} />
           </View>
@@ -310,43 +309,77 @@ export default function Home({ route }) {
 
           <View style={styles.containerdatos}>
             <View style={styles.textContainer}>
-              <Text style={styles.text}>Direccion</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
             <View style={styles.line}></View>
             <View style={styles.textContainer1}>
-              <Text style={styles.textDerecha}>{usuario.direccion}</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.textDerecha}
+  />
             </View>
           </View>
 
           <View style={styles.containerdatos}>
             <View style={styles.textContainer}>
-              <Text style={styles.text}>Telefono</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
             <View style={styles.line}></View>
             <View style={styles.textContainer1}>
-              <Text style={styles.textDerecha}>{usuario.telefono}</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.textDerecha}
+  />
             </View>
           </View>
 
           <View style={styles.containerdatos}>
             <View style={styles.textContainer}>
-              <Text style={styles.text}>Email</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
             <View style={styles.line}></View>
             <View style={styles.textContainer1}>
-              <Text style={styles.textDerecha}>
-                {usuario.correo_electronico}
-              </Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.textDerecha}
+  />
             </View>
           </View>
 
           <View style={styles.containerdatos}>
             <View style={styles.textContainer}>
-              <Text style={styles.text}>Cuenta Vinculada</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+  />
             </View>
             <View style={styles.line}></View>
             <View style={styles.textContainer1}>
-              <Text style={styles.textDerecha}>vgm@direcciondecorreo.com</Text>
+            <Skeleton
+    animation="wave"
+    width={80}
+    height={20}
+    style={styles.textDerecha}
+  />
             </View>
           </View>
         </View>
@@ -383,6 +416,224 @@ export default function Home({ route }) {
         onPress={handlePress1} // Pasa la función para manejar la navegación al componente
         usuario={usuario}
       />
+    </View>
+    );
+  };
+
+  const MainScreen =()=>{
+      
+   return(
+    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
+      {/* Sección de perfil */}
+      <View style={styles.header1}>
+        {/* Aquí puedes personalizar el contenido del header */}
+        {/* <View style={styles.containermenu} >
+                  <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+
+                      <Ionicons name="menu" size={30} color="white" />
+                  </TouchableOpacity>
+                  {showMenu && (
+                      <View style={styles.overlay}>
+                          <View style={styles.menu}>
+                              <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Home', { usuario: usuario })}>
+                                  <Text style={styles.menuText}>Mis datos</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                  style={styles.menuItem}
+                                  onPress={onPressLogout}
+                              >
+                                  <Text style={styles.menuText}>Cerrar sesion</Text>
+                              </TouchableOpacity>
+
+                          </View>
+                      </View>
+                  )}
+              </View> */}
+        <TouchableOpacity
+style={styles.menuButton}
+onPress={() => {
+  if (isModalVisible) {
+    // Si el modal está abierto, ciérralo
+    closeModal();
+  } else {
+    // Si el modal está cerrado, ábrelo
+    openModal();
+  }
+}}
+>
+      <Ionicons name="menu" size={30} color="white" />
+    </TouchableOpacity>
+   
+      </View>
+
+      <View style={styles.profileSection}>
+        {imageError ? (
+          // Mostrar un icono en lugar de la imagen si hay un error
+          <Image
+            source={require("../assets/usuario1.jpg")}
+            style={styles.profileImage}
+          />
+        ) : (
+          // Intenta cargar la imagen
+          <Image
+            source={{
+              uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+            }}
+            style={styles.profileImage}
+            onError={() => setImageError(true)} // Manejar error de carga de imagen
+          />
+        )}
+        <TouchableOpacity
+          onPress={handleFileChange}
+          style={styles.profileImage2}
+        >
+          <Ionicons name="camera" size={30} color="white" />
+        </TouchableOpacity>
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileTitle}>PERFIL</Text>
+
+          <Text style={styles.profileName}>
+            {usuario.nombre
+              .split(" ")
+              .slice(0, 2)
+              .concat(
+                usuario.nombre
+                  .split(" ")
+                  .slice(2)
+                  .map((word) => word[0])
+              )
+              .join(" ")}
+          </Text>
+          <LastConnection />
+        </View>
+      </View>
+      
+      {/* Linea */}
+      <View style={styles.containerDivider}>
+        <View style={styles.textDivider}>
+          <Text>DATOS DE TU CUENTA</Text>
+         
+
+        </View>
+        <View style={styles.divider} />
+      </View>
+      {/* Fin Linea */}
+
+      <View style={{ justifyContent: "flex-start", flex: 1 }}>
+        <View style={styles.containerdatos}>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>Cuenta</Text>
+          </View>
+          <View style={styles.line}></View>
+          <View style={styles.textContainer1}>
+            <Text style={styles.textDerecha}>{cuentaBancaria.nombre_cuenta}</Text>
+          </View>
+        </View>
+
+        <View style={styles.containerdatos}>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>No. De Cnta</Text>
+          </View>
+
+          <View style={styles.line}></View>
+          <View style={styles.textContainer1}>
+            <Text style={styles.textDerecha}>{cuentaBancaria.numero_tarjeta}</Text>
+          </View>
+        </View>
+
+        {/* Linea */}
+        <View style={styles.containerDivider}>
+          <View style={styles.textDivider}>
+            <Text>DATOS GENERALES</Text>
+          </View>
+          <View style={styles.divider} />
+        </View>
+        {/* Fin Linea */}
+
+        <View style={styles.containerdatos}>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>Direccion</Text>
+          </View>
+          <View style={styles.line}></View>
+          <View style={styles.textContainer1}>
+            <Text style={styles.textDerecha}>{usuario.direccion}</Text>
+          </View>
+        </View>
+
+        <View style={styles.containerdatos}>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>Telefono</Text>
+          </View>
+          <View style={styles.line}></View>
+          <View style={styles.textContainer1}>
+            <Text style={styles.textDerecha}>{usuario.telefono}</Text>
+          </View>
+        </View>
+
+        <View style={styles.containerdatos}>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>Email</Text>
+          </View>
+          <View style={styles.line}></View>
+          <View style={styles.textContainer1}>
+            <Text style={styles.textDerecha}>
+              {usuario.correo_electronico}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.containerdatos}>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>Cuenta Vinculada</Text>
+          </View>
+          <View style={styles.line}></View>
+          <View style={styles.textContainer1}>
+            <Text style={styles.textDerecha}>vgm@direcciondecorreo.com</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.containernav}>
+        <TouchableOpacity
+          style={styles.leftIcon}
+          onPress={() => navigation.navigate("Cartera", { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })}
+        >
+          <Ionicons name="wallet" size={30} color="white" />
+          <Text style={styles.textnavbar}>Cartera</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.centerIcon}
+          onPress={() =>
+            navigation.navigate("Inversiones", { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })
+          }
+        >
+          <Ionicons name="analytics" size={30} color="white" />
+          <Text style={styles.textnavbar2}>Inversiones</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.rightIcon}
+          onPress={() => navigation.navigate("Retirar", { usuario: usuario, affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria })}
+        >
+          <Ionicons name="arrow-back" size={30} color="white" />
+          <Text style={styles.textnavbar2}>Retirar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+    <SidebarModal
+      isVisible={isModalVisible} // Pasa el estado de visibilidad al SidebarModal
+      onClose={closeModal} // Pasa la función para cerrar el SidebarModal al componente
+      onPress={handlePress1} // Pasa la función para manejar la navegación al componente
+      usuario={usuario}
+    />
+  </View>
+   );
+  }
+  
+  return (
+    <View style={{ flex: 1 }}>
+      {isLoading ? <SkeletonScreen /> : null}
+      {!isLoading && <MainScreen />}
     </View>
   );
 }

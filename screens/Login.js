@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { Text, StyleSheet, View, Image, TextInput, TouchableOpacity, Alert, Switch } from "react-native";
+import React, { useState, useEffect,useRef } from "react";
+import { Text, StyleSheet, View, Image, TextInput, TouchableOpacity, Alert, Switch,Animated,Easing} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import CustomAlert from './CustomAlert';
 import * as LocalAuthentication from 'expo-local-authentication';
 import jwtDecode from 'jwt-decode';
+import {useIsFocused } from "@react-navigation/native";
 export default function Login(props) {
+    const isFocused = useIsFocused();
     const [rememberMe, setRememberMe] = useState(false);
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
     const [showPassword, setShowPassword] = useState(false);
     const [showAlert, setShowAlert] = useState(false);
     const [useBiometric, setUseBiometric] = useState(true);
-
+    const scaleValue = useRef(new Animated.Value(0)).current;
     useEffect(() => {
         
         const loadSavedCredentials = async () => {
@@ -31,7 +33,12 @@ export default function Login(props) {
                 console.error("Error loading saved credentials: ", error);
             }
         };
-
+        Animated.timing(scaleValue, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Cambiar el easing aquí
+            useNativeDriver: true,
+          }).start();
         loadSavedCredentials();
 
         // Check for biometric authentication availability
@@ -53,7 +60,7 @@ export default function Login(props) {
         return () => {
             // No cleanup needed for LocalAuthentication
         };
-    }, []);
+    }, [scaleValue,isFocused]);
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -81,11 +88,11 @@ export default function Login(props) {
             const response = await axios.post('http://192.168.1.72:3000/login', { correo_electronico: email, password });
             console.log('Respuesta del servidor:', response.data);
             if (response.status === 200 && response.data) {
-                if (response.data.usuario) {
+                if (response.data.usuario) {    
                     const usuario = response.data.usuario;
                     console.log('esto recibo de verificado',usuario.correoElectronicoVerificado)
                     if (usuario.correoElectronicoVerificado == 0) {
-                        Alert.alert('Error', 'Tu correo electrónico aún no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.');
+                        Alert.alert('Error', 'Tu correo electrónico aún no ha sido verificado. Por favor, verifica tu    correo electrónico antes de iniciar sesión.');
                         return; // Detener el proceso de inicio de sesión
                     }else{
                         await saveToken(response.data.token); // Guardar el token en AsyncStorage
@@ -217,13 +224,16 @@ export default function Login(props) {
 
             <View style={styles.tarjeta}>
                 {!useBiometric && (
+                    <Animated.View style={[styles.formContainer, { transform: [{ scale: scaleValue }] }]}>
                     <View style={styles.cajaTexto}>
                         <TextInput placeholder='Usuario / ID' style={{ paddingHorizontal: 65 }} onChangeText={(text) => setEmail(text)}  autoCapitalize='none'/>
                         <Ionicons name='person' size={35} color='white' style={styles.iconoUsuario} />
                     </View>
+                    </Animated.View>
                 )}
 
                 {!useBiometric && (
+                    <Animated.View style={[styles.formContainer, { transform: [{ scale: scaleValue }] }]}>
                     <View style={styles.cajaTexto}>
                         <TextInput
                             placeholder='Contraseña'
@@ -238,6 +248,7 @@ export default function Login(props) {
                             <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={35} color='gray' />
                         </TouchableOpacity>
                     </View>
+                    </Animated.View>
                 )}
 
                 <View style={styles.FatherBoton}>

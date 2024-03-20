@@ -8,20 +8,27 @@ import {
   Alert,
   TextInput,
   BackHandler,
-  ScrollView,
+  ScrollView
+  ,Modal,ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import LastConnection from "../backend/LastConnection";
 import axios from "axios";
 import SidebarModal from "./SidebarModal";
+import { Skeleton } from '@rneui/themed';
 export default function Datos({ route }) {
   const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
-
+  const [isLoading, setIsLoading] = useState(true);
   const openModal = () => {
     setIsModalVisible(true);
   };
-
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+        setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timeout);
+}, []);
   const closeModal = () => {
     setIsModalVisible(false);
   };
@@ -156,11 +163,20 @@ export default function Datos({ route }) {
       // Manejar el error según sea necesario
     }
   };
-
+  const LoadingModal = ({ visible }) => (
+    <Modal transparent={true} visible={visible}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      </View>
+    </Modal>
+  );
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.container}>
-        {/* Sección de perfil */}
+       
+        <LoadingModal visible={isLoading} />
         <View style={styles.header1}>
           <TouchableOpacity
             style={styles.menuButton}
@@ -198,7 +214,21 @@ export default function Datos({ route }) {
         <View style={styles.profileSection}>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>Mis datos</Text>
-            <LastConnection />
+            {isLoading ? (
+                     <>
+    <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha}
+  />
+  </>
+  ) : (
+    <>
+      <LastConnection />
+    </>
+  )}
+            
             <Text style={{ fontWeight: "bold", marginTop: 10 }}>
               Ingresa o modifica tus datos
             </Text>
@@ -400,6 +430,17 @@ export default function Datos({ route }) {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+  },
   paragraph: {
     padding: 16,
     fontSize: 15,

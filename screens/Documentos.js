@@ -1,12 +1,16 @@
 import React, { Component, useState, useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity, Alert } from "react-native"
+import { Text, StyleSheet, View, Image, TouchableOpacity, Alert, Modal, ActivityIndicator } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
+import { Skeleton } from '@rneui/themed';
 export default function Documentos({ route }) {
-
+    const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
-
+        const timeout = setTimeout(() => {
+            setIsLoading(false);
+        }, 2000);
+        return () => clearTimeout(timeout);
     }, []);
     const [showAlert, setShowAlert] = useState(true); // Estado para controlar la visibilidad del alert
     const navigation = useNavigation();
@@ -27,11 +31,20 @@ export default function Documentos({ route }) {
         closeModal();
         navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, cuentaBancaria: cuentaBancaria });
     };
+    const LoadingModal = ({ visible }) => (
+        <Modal transparent={true} visible={visible}>
+            <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                    <ActivityIndicator size="large" color="#0000ff" />
+                </View>
+            </View>
+        </Modal>
+    );
     return (
 
         <View style={styles.container}>
             <View style={styles.header1}>
-
+                <LoadingModal visible={isLoading} />
                 <View style={styles.profileInfo}>
                     {imageError1 ? (
                         // Mostrar un icono en lugar de la imagen si hay un error
@@ -112,27 +125,51 @@ export default function Documentos({ route }) {
                 </TouchableOpacity>
             )} */}
 
-            {usuario.verificado_ine === 1 && (
-                <View style={{ flexDirection: 'row', left: 70,marginTop:40 }}>
+            {isLoading ? ( // Si isLoading es true, muestra el esqueleto
+                <>
 
-                    <Text style={styles.TextoValidado}>
-                        Documento INE validado
-                    </Text>
-                    <Ionicons name="checkmark-circle-outline" size={24} color="green" />
-                </View>
-            )}
-            {usuario.verificado_curp === 1 && (
-                <View style={{ flexDirection: 'row', left: 70,marginTop:20 }}>
+                    <View style={{ flexDirection: 'row', left: 70, marginTop: 40 }}>
+                        <Skeleton
+                            animation="wave"
+                            width={240}
+                            height={20}
 
-                    <Text style={styles.TextoValidado}>
-                        Documento CURP validado
-                    </Text>
-                    <Ionicons name="checkmark-circle-outline" size={24} color="green" />
-                </View>
+                        />
+                    </View>
 
+
+                    <View style={{ flexDirection: 'row', left: 70, marginTop: 20 }}>
+                        <Skeleton
+                            animation="wave"
+                            width={240}
+                            height={20}
+
+                        />
+                    </View>
+
+                </>
+            ) : ( // Si isLoading es false, muestra el contenido real
+                <>
+                    {usuario.verificado_ine === 1 && (
+                        <View style={{ flexDirection: 'row', left: 70, marginTop: 40 }}>
+                            <Text style={styles.TextoValidado}>
+                                Documento INE validado
+                            </Text>
+                            <Ionicons name="checkmark-circle-outline" size={24} color="green" />
+                        </View>
+                    )}
+                    {usuario.verificado_curp === 1 && (
+                        <View style={{ flexDirection: 'row', left: 70, marginTop: 20 }}>
+                            <Text style={styles.TextoValidado}>
+                                Documento CURP validado
+                            </Text>
+                            <Ionicons name="checkmark-circle-outline" size={24} color="green" />
+                        </View>
+                    )}
+                </>
             )}
             <View>
-              
+
 
             </View>
 
@@ -161,7 +198,17 @@ export default function Documentos({ route }) {
 }
 
 const styles = StyleSheet.create({
-
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+    },
     container: {
         flex: 1,
         backgroundColor: 'white',

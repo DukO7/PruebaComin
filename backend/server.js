@@ -332,7 +332,7 @@ app.post('/login', (req, res) => {
             console.log('Meses transcurridos:', mesesTranscurridos);
             let nuevoValorActualizadoSaldo;
 
-            if (mesesTranscurridos >= 1) {
+            if (mesesTranscurridos <= 1) {
               nuevoValorActualizadoSaldo = 0;
             } else {
               nuevoValorActualizadoSaldo = 1;

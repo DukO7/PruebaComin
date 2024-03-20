@@ -2,9 +2,10 @@ import React, {useState, useRef, useEffect } from "react";
 import { View, StyleSheet,BackHandler,Alert } from 'react-native';
 import WebView from 'react-native-webview';
 import { useNavigation,useIsFocused } from '@react-navigation/native';
-const WebViewComponent = (checkoutUrl,usuario) => {
+const WebViewComponent = ({ route }) => {
     const navigation = useNavigation();
-    console.log('esto recibo',checkoutUrl.route.params.checkoutUrl);
+    const { usuario,checkoutUrl} = route.params;
+    console.log('esto recibo',checkoutUrl);
     const removeDivsScript = `
   const headerImageDivToRemove = document.querySelector('.HeaderImage.HeaderImage--icon.HeaderImage--iconFallback.flex-item.width-fixed');
   if (headerImageDivToRemove) {
@@ -16,7 +17,7 @@ const WebViewComponent = (checkoutUrl,usuario) => {
     testModeDivToRemove.remove();
   }
 `;
-
+console.log('esto recibo de usuarios:',usuario);
 useEffect(() => {
     const backAction = () => {
       Alert.alert(
@@ -52,7 +53,7 @@ useEffect(() => {
     <View style={styles.container}>
         
       <WebView
-        source={{ uri:checkoutUrl.route.params.checkoutUrl }}
+        source={{ uri:checkoutUrl }}
         style={styles.webview}
         injectedJavaScript={removeDivsScript}
   javaScriptEnabled={true}

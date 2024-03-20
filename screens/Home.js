@@ -124,7 +124,7 @@ export default function Home({ route }) {
   };
 
   const [refreshCount, setRefreshCount] = useState(0);
-
+  const [updateKey, setUpdateKey] = useState(0);
   const handleRefresh = () => {
     // Incrementa el contador de actualización para forzar una re-renderización
     setRefreshCount(refreshCount + 1);
@@ -176,13 +176,16 @@ export default function Home({ route }) {
       setTimeout(() => {
         handleRefresh();
         console.log("se actualizo correctamente");
+        handleUpdateImage();
       }, 2000);
     } catch (error) {
       console.error("Error uploading image:", error);
     }
   };
   const [imageError, setImageError] = useState(false);
-
+  const handleUpdateImage = () => {
+    setUpdateKey(prevKey => prevKey + 1); // Incrementa el valor de updateKey para forzar la actualización
+  };
   const [isSidebarVisible, setIsSidebarVisible] = React.useState(false);
   const handleSidebarClose = () => {
     setIsSidebarVisible(false);
@@ -477,9 +480,10 @@ onPress={() => {
         ) : (
           // Intenta cargar la imagen
           <Image
-            source={{
-              uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
-            }}
+          key={updateKey}
+          source={{
+            uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg?${updateKey}`, // Agrega un parámetro único para forzar la actualización
+          }}
             style={styles.profileImage}
             onError={() => setImageError(true)} // Manejar error de carga de imagen
           />

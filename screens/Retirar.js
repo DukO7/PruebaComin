@@ -1,5 +1,5 @@
 import React, {useState, useRef, useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity, TextInput, Alert } from "react-native"
+import { Text, StyleSheet, View, Image, TouchableOpacity, TextInput, Alert,Modal,ActivityIndicator } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation,useIsFocused } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
@@ -7,12 +7,13 @@ import axios from 'axios';
 import CustomAlert from './CustomAlert';
 import moment from 'moment';
 import differenceInDays from 'date-fns/differenceInDays';
+import { Skeleton } from '@rneui/themed';
 export default function Retirar({ route }) {
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha} = route.params;
     const [cuentaBancaria1, SetcuentaBancaria] = useState(0);
     const [retiros, setRetiros] = useState(0);
     const isFocused = useIsFocused();
-  
+    const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
         const fetchData = async () => {
           try {
@@ -29,6 +30,10 @@ export default function Retirar({ route }) {
         // puedes pasar un array vacío como segundo argumento de useEffect.
         // Si necesitas que se ejecute cada vez que cambie alguna dependencia,
         // puedes pasar las dependencias como segundo argumento de useEffect.
+        const timeout = setTimeout(() => {
+            setIsLoading(false);
+          }, 2000);
+          return () => clearTimeout(timeout);
       }, [retiros,isFocused]);
     const handleInvertirClick = () => {
         const currentDate = new Date();
@@ -192,11 +197,20 @@ export default function Retirar({ route }) {
               Alert.alert("No haz insertado monto a retirar");
             }
       }
-    
+      const LoadingModal = ({ visible }) => (
+        <Modal transparent={true} visible={visible}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+          </View>
+        </Modal>
+      );
     return (
         <View style={{ flex: 1 }}>
             <View style={styles.containerDraw}>
             <CustomAlert visible={showAlert} message="Retirando..." />
+            <LoadingModal visible={isLoading} />
             </View>
             <View style={styles.container}>
                 <View style={styles.header1}>
@@ -238,11 +252,37 @@ export default function Retirar({ route }) {
                     </View>
                 </View>
                 <View style={styles.containerdatos}>
-                    <View style={styles.textContainer}>
-                        <Text style={styles.textDerecha}>RETIRAR</Text>
-                        <Text style={styles.textDerecha2}>Balance</Text>
-                        <Text style={styles.textDerecha1}>$ {cuentaBancaria1.saldo_afiliados}</Text>
-                    </View>
+                <View style={styles.textContainer}>
+                {isLoading ? (
+                     <>
+    <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha}
+  />
+   <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha2}
+  />
+   <Skeleton
+    animation="wave"
+    width={130}
+    height={20}
+    style={styles.textDerecha1}
+  />
+  </>
+  ) : (
+    <>
+      <Text style={styles.textDerecha}>RETIRAR</Text>
+      <Text style={styles.textDerecha2}>Balance</Text>
+      <Text style={styles.textDerecha1}>$ {cuentaBancaria1.saldo_afiliados}</Text>
+    </>
+  )}
+
+                        </View>
                 </View>
                 <View style={styles.containerDivider}>
 
@@ -296,6 +336,17 @@ export default function Retirar({ route }) {
 }
 
 const styles = StyleSheet.create({
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      },
+      modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+      },
     container: {
         flex: 1,
         backgroundColor: 'white',

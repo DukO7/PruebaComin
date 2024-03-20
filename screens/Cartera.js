@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity, FlatList } from "react-native";
+import { Text, StyleSheet, View, Image, TouchableOpacity, FlatList,Modal,ActivityIndicator } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation,useIsFocused } from '@react-navigation/native';
 import CreditCardImage from '../assets/tarjeta.png'
 import SidebarModal from "./SidebarModal";
 import axios from 'axios';
+import { Skeleton } from '@rneui/themed';
 export default function Cartera({ route }) {
   const [dates, setDates] = useState([]);
   const [inversions, setInversions] = useState([]);
   const isFocused = useIsFocused();
   const [cuentaBancaria1, SetcuentaBancaria] = useState(0);
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(true);
   const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha } = route.params;
   //console.log('esto estoy recibiendo en cuenta banco:', cuentaBancaria);
   useEffect(() => {
@@ -43,6 +45,10 @@ export default function Cartera({ route }) {
       filterInversionsByType('Retiro de cuenta');
     }
     fetchData();
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timeout);
   }, [showDeposits, inversionesPorFecha,isFocused]);
   console.log('esto regresa cuentaBancaria1',cuentaBancaria1);
   const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del SidebarModal
@@ -81,10 +87,19 @@ export default function Cartera({ route }) {
   };
   const [showDeposits, setShowDeposits] = useState(true);
   const [imageError, setImageError] = useState(false);
-
+  const LoadingModal = ({ visible }) => (
+    <Modal transparent={true} visible={visible}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      </View>
+    </Modal>
+  );
   return (
     <View style={styles.container}>
       <View style={styles.header1}>
+      <LoadingModal visible={isLoading} />
         <View style={styles.profileInfo1}>
           {imageError ? (
 
@@ -124,16 +139,25 @@ export default function Cartera({ route }) {
 
 
       <View style={styles.profileSection}>
-        <View style={styles.creditCard}>
-          <Image source={CreditCardImage} style={styles.creditCardImage} />
-          <Text style={styles.balanceText}>Balance</Text>
-          <Text style={styles.balanceAmount}>$ {cuentaBancaria1.saldo_afiliados}</Text>
-          <View style={styles.cardContent}>
-
-            <Text style={styles.cardNameText}>{cuentaBancaria1.nombre_cuenta}</Text>
-          </View>
-          <Text style={styles.cardNumberText}>{cuentaBancaria1.numero_tarjeta}</Text>
-        </View>
+      <View style={styles.creditCard}>
+        
+  {isLoading ? (
+    <>
+    <Image source={CreditCardImage} style={styles.creditCardImage} />
+     
+   </>
+  ) : (
+    <>
+      <Image source={CreditCardImage} style={styles.creditCardImage} />
+      <Text style={styles.balanceText}>Balance</Text>
+      <Text style={styles.balanceAmount}>$ {cuentaBancaria1.saldo_afiliados}</Text>
+      <View style={styles.cardContent}>
+        <Text style={styles.cardNameText}>{cuentaBancaria1.nombre_cuenta}</Text>
+      </View>
+      <Text style={styles.cardNumberText}>{cuentaBancaria1.numero_tarjeta}</Text>
+    </>
+  )}
+</View>
       </View>
 
 
@@ -153,43 +177,63 @@ export default function Cartera({ route }) {
         </View>
       </View>
       <FlatList
-        data={Object.entries(inversionesPorFecha)} // Convertimos el objeto a un array de pares clave-valor
-        extraData={showDeposits} // Pasamos 'showDeposits' como información adicional
-        renderItem={({ item }) => {
-          const filteredInversions = showDeposits
+  data={Object.entries(inversionesPorFecha)} // Convertimos el objeto a un array de pares clave-valor
+  extraData={showDeposits} // Pasamos 'showDeposits' como información adicional
+  renderItem={({ item }) => {
+    const filteredInversions = showDeposits
+      ? item[1].filter(inversion => inversion.descripcion.includes('Transferencia SPEI'))
+      : item[1].filter(inversion => inversion.descripcion.includes('Retiro de cuenta'));
 
-            ? item[1].filter(inversion => inversion.descripcion.includes('Transferencia SPEI'))
-            : item[1].filter(inversion => inversion.descripcion.includes('Retiro de cuenta'));
-
-          return (
-            <View >
-              <FlatList
-                data={uniqueDates} // Filtramos las inversiones según el valor de 'showDeposits'
-                renderItem={({ item }) => (
-                  <View style={styles.containerDivider}>
-                    <View style={styles.textDivider}>
-                      <Text>{item}</Text>
-                      <View style={styles.divider} />
-                    </View>
+    return (
+      <View>
+        {isLoading ? (
+          <>
+          <View style={styles.containerdatos}>
+          <Skeleton
+          animation="wave"
+          width={50}
+          height={20}
+          style={styles.textContainer}
+        />
+        <Skeleton
+          animation="wave"
+          width={50}
+          height={20}
+          style={styles.textDerecha}
+        />
+        </View>
+        </>
+        ) : (
+          <>
+            <FlatList
+              data={uniqueDates} // Filtramos las inversiones según el valor de 'showDeposits'
+              renderItem={({ item }) => (
+                <View style={styles.containerDivider}>
+                  <View style={styles.textDivider}>
+                    <Text>{item}</Text>
+                    <View style={styles.divider} />
                   </View>
-                )}
-                keyExtractor={item => item} // Clave única para cada elemento
-              />
-              <FlatList
-                data={filteredInversions} // Filtramos las inversiones según el valor de 'showDeposits'
-                renderItem={({ item: inversion }) => (
-                  <View style={styles.containerdatos}>
-                    <Text style={styles.textContainer}>{inversion.descripcion}</Text>
-                    <Text style={styles.textDerecha}>${inversion.cantidad}</Text>
-                  </View>
-                )}
-                keyExtractor={inversion => inversion.id.toString()} // Clave única para cada elemento
-              />
-            </View>
-          )
-        }}
-        keyExtractor={(item, index) => index.toString()} // Clave única para cada elemento
-      />
+                </View>
+              )}
+              keyExtractor={item => item} // Clave única para cada elemento
+            />
+            <FlatList
+              data={filteredInversions} // Filtramos las inversiones según el valor de 'showDeposits'
+              renderItem={({ item: inversion }) => (
+                <View style={styles.containerdatos}>
+                  <Text style={styles.textContainer}>{inversion.descripcion}</Text>
+                  <Text style={styles.textDerecha}>${inversion.cantidad}</Text>
+                </View>
+              )}
+              keyExtractor={inversion => inversion.id.toString()} // Clave única para cada elemento
+            />
+          </>
+        )}
+      </View>
+    );
+  }}
+  keyExtractor={(item, index) => index.toString()} // Clave única para cada elemento
+/>
       <View style={styles.containernav}>
         <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
           <Ionicons name="wallet" size={30} color="#7494b3" />
@@ -215,6 +259,17 @@ export default function Cartera({ route }) {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+  },
   archivo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,7 +442,6 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    alignItems: 'left',
     left: 40
   },
   textContainer1: {

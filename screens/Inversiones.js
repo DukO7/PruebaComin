@@ -1,5 +1,5 @@
 import React, { Component, useState,useEffect } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity, Alert, Linking, TextInput } from "react-native"
+import { Text, StyleSheet, View, Image, TouchableOpacity, Alert, Linking, TextInput,Modal,ActivityIndicator } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation,useIsFocused } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
@@ -249,17 +249,24 @@ export default function Inversiones({ route }) {
             <View style={styles.container}>
             <View style={styles.header1}>
             <CustomAlert visible={showAlert} message="Redirigiendo..." />
-                <View style={styles.profileInfo}>
-                <Skeleton
-    circle width={40} height={40}
-    style={styles.profileImage}
-  />
-  <Skeleton
-    animation="wave"
-    width={130}
-    height={20}
-    style={styles.textHeader1}
-  />
+            <LoadingModal visible={isLoading} />
+            <View style={styles.profileInfo}>
+                    {imageError ? (
+                        <Image
+                            source={require("../assets/usuario1.jpg")}
+                            style={styles.profileImage}
+                        />
+                    ) : (
+                        
+                        <Image
+                            source={{
+                                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                            }}
+                            style={styles.profileImage}
+                            onError={() => setImageError(true)}
+                        />
+                    )}
+                    <Text style={styles.textHeader1}>{usuario.nombre}</Text>
                 </View>
                 <View style={styles.containermenu}>
                     <TouchableOpacity
@@ -315,7 +322,7 @@ export default function Inversiones({ route }) {
              <View style={styles.picker}>
              <Skeleton
     animation="wave"
-    width={130}
+    width={120}
     height={20}
     style={styles.picker}
   />  
@@ -338,14 +345,13 @@ export default function Inversiones({ route }) {
 
             <View style={styles.FatherBoton}>
 
-               
-                <Skeleton
-    animation="wave"
-    width={130}
-    height={20}
-    style={styles.cajaBoton}
-  />  
-              
+                <TouchableOpacity style={styles.cajaBoton} onPress={handleInvertirClick} >
+
+                    <Text style={styles.TextoBoton}>
+                        Invertir
+                    </Text>
+                </TouchableOpacity>
+
             </View>
             <View style={styles.containernav}>
                 <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 })}>
@@ -370,13 +376,22 @@ export default function Inversiones({ route }) {
         </View>
         );
     }
-
+    const LoadingModal = ({ visible }) => (
+        <Modal transparent={true} visible={visible}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+          </View>
+        </Modal>
+      );
 
     const MainScreen = ()=>{
         return(
             <View style={styles.container}>
             <View style={styles.header1}>
             <CustomAlert visible={showAlert} message="Redirigiendo..." />
+            
                 <View style={styles.profileInfo}>
                     {imageError ? (
                         <Image
@@ -509,6 +524,17 @@ export default function Inversiones({ route }) {
 }
 
 const styles = StyleSheet.create({
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      },
+      modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+      },
     archivo: {
         flexDirection: 'row',
         alignItems: 'center',

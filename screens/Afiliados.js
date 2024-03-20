@@ -1,12 +1,28 @@
-import React, { Component, useState } from "react";
-import { Text, StyleSheet, View, Image, TouchableOpacity,Share,ScrollView } from "react-native"
+import React, { Component, useState,useEffect } from "react";
+import { Text, StyleSheet, View, Image, TouchableOpacity,Share,ScrollView,Modal,ActivityIndicator } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SidebarModal from "./SidebarModal";
+import { Skeleton } from '@rneui/themed';
 export default function Afiliados({ route }) {
     const navigation = useNavigation();
     const { usuario, affiliateBonus, datosafiliados, cuentaBancaria, inversionesPorFecha } = route.params || {};
-
+    const [isLoading, setIsLoading] = useState(true);
+    const LoadingModal = ({ visible }) => (
+      <Modal transparent={true} visible={visible}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        </View>
+      </Modal>
+    );
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+          setIsLoading(false);
+      }, 2000);
+      return () => clearTimeout(timeout);
+  }, []);
     const handlePress = (screenName) => {
         navigation.navigate(screenName);
     };
@@ -60,11 +76,13 @@ export default function Afiliados({ route }) {
         closeModal(); // Cierra el SidebarModal después de presionar un elemento
          navigation.navigate(screen, { usuario: usuario,affiliateBonus:affiliateBonus,datosafiliados:datosafiliados,inversionesPorFecha:inversionesPorFecha,cuentaBancaria:cuentaBancaria });
       };
+      
     return (
 
         <View style={styles.container}>
+
             <View style={styles.header1}>
-                
+                <LoadingModal visible={isLoading} />
             <View style={styles.profileInfo}>
             {imageError1 ? (
             // Mostrar un icono en lugar de la imagen si hay un error
@@ -109,8 +127,22 @@ export default function Afiliados({ route }) {
             <View style={styles.containerdatos}>
                 <View style={styles.textContainer}>
                     <Text style={styles.textDerecha}>¡Tu número de afiliado! Compártelo con hasta 7 personas y recibe un % de beneficio por cada uno que se una.</Text>
+                    
                     <Text style={styles.textDerecha2}>Numero:</Text>
-                    <Text style={styles.textDerecha1}>{usuario.codigo_afiliado}</Text>
+                    {isLoading ? (
+                     <>
+    <Skeleton
+    animation="wave"
+    width={130}
+    height={30}
+    style={styles.textDerecha1}
+  />
+  </>
+  ) : (
+    <>
+      <Text style={styles.textDerecha1}>{usuario.codigo_afiliado}</Text>
+    </>
+  )}
                 </View>
                 
             </View>
@@ -126,39 +158,54 @@ export default function Afiliados({ route }) {
   <Text style={{ alignItems: 'center', left: 135, fontSize: 22, top: 20 }}>Tus afiliados</Text>
   </View>
   {/* Iterar sobre los afiliados y mostrar su información */}
-  <ScrollView style={{height: '45%', marginBottom:40}}>
-  {datosafiliados.map((afiliado, index) => (
-        <View style={styles.barradoble} key={index}>
-          <View>
-            {/* Mostrar la foto del afiliado */}
-            {imageErrorss[index] ? (
-              // Mostrar un icono en lugar de la imagen si hay un error
-              <Image
-                source={require("../assets/usuario1.jpg")}
-                style={styles.profileImage2}
-              />
-            ) : (
-              // Intenta cargar la imagen
-              <Image
-                source={{
-                  uri: `http://192.168.1.72:3000/uploads/${afiliado.id}.jpg`,
-                }}
-                style={styles.profileImage2}
-                onError={() => handleImageError(index)} // Manejar error de carga de imagen
-              />
-            )}
+  <ScrollView style={{ height: '45%', marginBottom: 40 }}>
+      {isLoading ? (
+        // Si isLoading es true, muestra los esqueletos
+        Array.from({ length: datosafiliados.length }, (_, index) => (
+          <View style={styles.barradoble} key={index}>
+            <Skeleton circle width={40} height={40} style={styles.profileImage2} />
+            <View style={styles.moneyBar2}>
+              <Skeleton  animation="wave" style={{ color: 'white', width: '80%', height: 20 }} />
+            </View>
+            <View style={styles.moneyBar3}>
+              <Skeleton  animation="wave" style={{ color: 'white', width: '80%', height: 20 }} />
+            </View>
           </View>
-      <View style={styles.moneyBar}>
-        {/* Mostrar el nombre del afiliado */}
-        <Text style={{color:'white'}}>{afiliado.nombre}</Text>
-      </View>
-      <View style={styles.moneyBar1}>
-        {/* Mostrar el nombre del afiliado */}
-        <Text style={{color:'white'}}>{Math.round(afiliado.bono * 100) / 100}</Text>
-      </View>
-    </View>
-  ))}
-  </ScrollView>
+        ))
+      ) : (
+        // Si isLoading es false, muestra los datos reales
+        datosafiliados.map((afiliado, index) => (
+          <View style={styles.barradoble} key={index}>
+            <View>
+              {imageErrorss[index] ? (
+                // Mostrar un icono en lugar de la imagen si hay un error
+                <Image
+                  source={require("../assets/usuario1.jpg")}
+                  style={styles.profileImage2}
+                />
+              ) : (
+                // Intenta cargar la imagen
+                <Image
+                  source={{
+                    uri: `http://192.168.1.72:3000/uploads/${afiliado.id}.jpg`,
+                  }}
+                  style={styles.profileImage2}
+                  onError={() => handleImageError(index)} // Manejar error de carga de imagen
+                />
+              )}
+            </View>
+            <View style={styles.moneyBar}>
+              {/* Mostrar el nombre del afiliado */}
+              <Text style={{ color: 'white' }}>{afiliado.nombre}</Text>
+            </View>
+            <View style={styles.moneyBar1}>
+              {/* Mostrar el bono del afiliado */}
+              <Text style={{ color: 'white' }}>{Math.round(afiliado.bono * 100) / 100}</Text>
+            </View>
+          </View>
+        ))
+      )}
+    </ScrollView>
 </View>
            
             <View style={styles.containernav}>
@@ -186,6 +233,17 @@ export default function Afiliados({ route }) {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+  },
     archivo:{
         flexDirection: 'row',
         alignItems: 'center',
@@ -469,6 +527,32 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+      },
+      moneyBar2: {
+        // Color de fondo verde
+       
+        width: 120,
+        marginLeft: 10,
+        
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        marginVertical: 20,
+        alignSelf: 'center', // Alinear al centro horizontalmente
+        
+        
+      },
+      moneyBar3: {
+        // Color de fondo verde
+       
+        width: 120,
+        marginLeft: 10,
+        
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        marginVertical: 20,
+        alignSelf: 'center', // Alinear al centro horizontalmente
+        
+        
       },
     moneyText: {
         marginLeft: 60,

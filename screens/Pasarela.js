@@ -1,18 +1,27 @@
 import React, { Component, useState,useEffect } from "react";
-import { View, Text, Button, StyleSheet,TouchableOpacity,Alert,Image
+import { View, Text, Button, StyleSheet,TouchableOpacity,Alert,Image,Modal,ActivityIndicator
  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import moment from 'moment';
 import { openBrowserAsync } from 'expo-web-browser';
+import SidebarModal from "./SidebarModal";
 const Pasarela = ({ route }) => {
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,textInputValue,textInputValue1} = route.params;
+    const [isModalVisible, setIsModalVisible] = useState(false);
     console.log('esto estoy recibiendo de plan',textInputValue);
     console.log('esto estoy recibiendo de adicional',textInputValue1);
     const navigation = useNavigation();
     const [checkoutUrl, setCheckoutUrl] = useState(null);
     const [showAlert, setShowAlert] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+          setIsLoading(false);
+      }, 2000);
+      return () => clearTimeout(timeout);
+  }, []);
     const PaymentService = {
         async createPayment() {
             const url = "https://api.mercadopago.com/checkout/preferences";
@@ -175,27 +184,66 @@ const Pasarela = ({ route }) => {
       console.log('esto recibo de await',data.url);
       navigation.navigate('Spei2',{usuario:usuario,checkoutUrl:data.url})
     };
+    const LoadingModal = ({ visible }) => (
+      <Modal transparent={true} visible={visible}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        </View>
+      </Modal>
+    );
+    const [imageError, setImageError] = useState(false);
   return (
     <View style={styles.container}>
+      <View style={styles.header1}>
+      <LoadingModal visible={isLoading} />
+        <View style={styles.profileInfo1}>
+          {imageError ? (
+
+            <Image
+              source={require("../assets/usuario1.jpg")}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Image
+              source={{
+                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+              }}
+              style={styles.profileImage}
+              onError={() => setImageError(true)}
+            />
+          )}
+          <Text style={styles.textHeader1}>{usuario.nombre}</Text>
+        </View>
+        <View style={styles.containermenu}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => {
+              if (isModalVisible) {
+
+                closeModal();
+              } else {
+
+                openModal();
+              }
+            }}
+          >
+            <Ionicons name="menu" size={30} color="white" />
+          </TouchableOpacity>
+
+        </View>
+      </View>
       <Text style={styles.title}>Elige una opción de pago:</Text>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Pagar con Mercado Pago"
-          onPress={handlePress3}
-        />
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Pagar con SPEI"
-          onPress={handleCheckout}
-        />
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Pagar con Bitso (Criptomonedas)"
-          onPress={() => navigation.navigate('Bitso')}
-        />
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handlePress3}>
+        <Text style={styles.buttonText}>Pagar con Mercado Pago</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleCheckout}>
+        <Text style={styles.buttonText}>Pagar con SPEI</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Bitso')}>
+        <Text style={styles.buttonText}>Pagar con Bitso (Criptomonedas)</Text>
+      </TouchableOpacity>
       <View style={styles.containernav}>
                 <TouchableOpacity style={styles.leftIcon} onPress={() => navigation.navigate('Cartera', { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria })}>
                     <Ionicons name="wallet" size={30} color="white"/>
@@ -210,17 +258,80 @@ const Pasarela = ({ route }) => {
                     <Text style={styles.textnavbar2}>Retirar</Text>
                 </TouchableOpacity>
             </View>
+            <SidebarModal
+        isVisible={isModalVisible} // Pasa el estado de visibilidad al SidebarModal
+        onClose={closeModal} // Pasa la función para cerrar el SidebarModal al componente
+        onPress={handlePress1} // Pasa la función para manejar la navegación al componente
+        usuario={usuario}
+      />
     </View>
     
   );
 };
 
 const styles = StyleSheet.create({
+  textHeader1: {
+    color: 'white',
+    marginLeft: 10,
+    marginTop: 40
+  },
+  containermenu: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 1,
+  },
+  header1: {
+    backgroundColor: '#1d2027',
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  profileInfo1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    top: -5
+  },
+  
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 80,
+    marginLeft: 20,
+    top: 20,
+    left: 0,
+    borderColor: 'white',
+    borderWidth: 2,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+  },
+  container: {
+    flex: 1,
+    
+
   },
   title: {
     fontSize: 20,
@@ -266,6 +377,37 @@ centerIcon: {
 rightIcon: {
     flex: 1,
     alignItems: 'flex-end',
+},
+title: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  marginBottom: 20,
+  textAlign: 'center',
+  color: '#333', // Color de texto oscuro
+},
+button: {
+  backgroundColor: '#2196F3',
+  paddingVertical: 15,
+  paddingHorizontal: 30,
+  borderRadius: 25,
+  marginBottom: 20,
+  top:60,
+  width: '80%',
+  marginLeft:40,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 3,
+  },
+  shadowOpacity: 0.27,
+  shadowRadius: 4.65,
+  elevation: 6,
+},
+buttonText: {
+  color: 'white',
+  fontSize: 18,
+  fontWeight: 'bold',
 },
 });
 

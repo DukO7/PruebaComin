@@ -18,7 +18,7 @@ export default function Retirar({ route }) {
         const fetchData = async () => {
           try {
             // Supongamos que obtienes el usuario de alguna manera
-            const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
+            const afiliados = await axios.post('http://192.168.1.74:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
             SetcuentaBancaria (afiliados.data.cuenta);
             console.log('Esto se recibe1:', cuentaBancaria1);
           } catch (error) {
@@ -32,7 +32,7 @@ export default function Retirar({ route }) {
         // puedes pasar las dependencias como segundo argumento de useEffect.
         const timeout = setTimeout(() => {
             setIsLoading(false);
-          }, 2000);
+          }, 1000);
           return () => clearTimeout(timeout);
       }, [retiros,isFocused]);
     const handleInvertirClick = () => {
@@ -132,7 +132,7 @@ export default function Retirar({ route }) {
         <View style={[styles.container, styles.navigationContainer]}>
             <View style={styles.profileInfo}>
                 <Image
-                    source={{ uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg` }}
+                    source={{ uri: `http://192.168.1.74:3000/uploads/${usuario.id}.jpg` }}
                     style={styles.profileImageDraw}
                 />
             </View>
@@ -178,7 +178,7 @@ export default function Retirar({ route }) {
             console.log('se envia saldo total:',usuario.saldo+affiliateBonus);
             const timestamp = new Date().getTime();
             const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-            const datos = await axios.post('http://192.168.1.72:3000/Retirar', {
+            const datos = await axios.post('http://192.168.1.74:3000/Retirar', {
                 usuarioId: usuario.id,
                 saldo: amount, 
                 saldototal:usuario.saldo+affiliateBonus,
@@ -225,7 +225,7 @@ export default function Retirar({ route }) {
                             // Intenta cargar la imagen
                             <Image
                                 source={{
-                                    uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                                    uri: `http://192.168.1.74:3000/uploads/${usuario.id}.jpg`,
                                 }}
                                 style={styles.profileImage}
                                 onError={() => setImageError(true)} // Manejar error de carga de imagen

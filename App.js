@@ -26,6 +26,7 @@ import IneyCurp3 from './screens/IneyCurp3';
 import PaymentScreen from './screens/Pago';
 import Pasarela from './screens/Pasarela';
 import Spei2 from './screens/Spei2';
+import linking from './routes/linking';
 export default function App() {
   const Stack =createStackNavigator();
   const Tab= createBottomTabNavigator();
@@ -78,7 +79,7 @@ function MyStack() {
 }
 
   return (
-   <NavigationContainer>
+   <NavigationContainer linking={linking}>
     <MyStack/>
    </NavigationContainer>
   );

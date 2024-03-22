@@ -12,7 +12,6 @@ const nodemailer = require('nodemailer');
 const salt = bcrypt.genSaltSync(10);
 const stripe = require('stripe')('sk_test_51OqKITGl1997KuzQMJdP0omwI7Xrk1X672ueUpm1ncFQVD0GJ9tAWLbyLB6Ydt8wppyb1LaH6BQb3zz2rAVkhMyc00aw7M0F2O');
 
-
 // Configurar la conexión a la base de datos MySQL
 const connection = mysql.createConnection({
   host: 'localhost', // La dirección del servidor MySQL
@@ -332,15 +331,15 @@ app.post('/login', (req, res) => {
             console.log('Meses transcurridos:', mesesTranscurridos);
             let nuevoValorActualizadoSaldo;
 
-            if (mesesTranscurridos <= 1) {
-              nuevoValorActualizadoSaldo = 0;
-            } else {
-              nuevoValorActualizadoSaldo = 1;
-            }
-
+            // if (mesesTranscurridos >= 1) {
+            //   nuevoValorActualizadoSaldo = 0;
+            // } else {
+            //   nuevoValorActualizadoSaldo = 1;
+            // }
+              // < es para que funcione correctamente. > es para que permita actualizar
             if (diaActual>= 1) {
               // Actualizar el campo actualizado_saldo en la tabla usuarios
-              console.log('dias para actulizar',nuevoValorActualizadoSaldo);
+              console.log('dias para actulizar',diaActual);
               const queryActualizarSaldo = 'UPDATE usuarios SET actualizado_saldo = 0 WHERE id = ?';
               connection.query(queryActualizarSaldo, [usuario.id], (err, results) => {
                 if (err) {
@@ -362,7 +361,6 @@ app.post('/login', (req, res) => {
               });
             }
           });
-
           res.status(200).json({ message: 'Inicio de sesión exitoso', usuario: usuarioSinFoto, token });
         } else {
           res.status(401).json({ error: 'Credenciales inválidas' });
@@ -428,9 +426,7 @@ app.post('/update-balance', (req, res) => {
       res.status(500).json({ error: 'Error interno del servidor' });
       return;
     }
-
     const hasAffiliates = results[0].count > 0;
-
     if (hasAffiliates) {
       // Obtener el saldo de cada afiliado
       const query = 'SELECT id, nombre, saldo FROM usuarios WHERE numero_afiliado_referente = ? AND id != ?';
@@ -448,12 +444,27 @@ app.post('/update-balance', (req, res) => {
         // Iterar sobre los resultados y guardar los datos de los afiliados en el array
         for (const affiliate of results) {
           totalAffiliateBalance += affiliate.saldo;
+          let bono;
+          switch (porcentaje_afiliado) {
+            case 6:
+              bono = affiliate.saldo * 0.06;
+              break;
+            case 7:
+              bono = affiliate.saldo * 0.071;
+              break;
+            case 9:
+              bono = affiliate.saldo * 0.094;
+              break;
+            default:
+              bono = 0;
+              break;
+          }
           // Crear un objeto para cada afiliado con su id y saldo
           const afiliado = {
             id: affiliate.id,
             nombre: affiliate.nombre,
             saldo: affiliate.saldo,
-            bono:affiliate.saldo*0.05
+            bono:bono
           };
 
           // Agregar el objeto afiliado al array
@@ -489,9 +500,9 @@ let bonoplan;
 
 if (porcentaje === 6) {
   bonoplan = saldobono * 0.057;
-} else if(porcentaje_afiliado === 7){
+} else if(porcentaje === 7){
   bonoplan = saldobono * 0.073;
-}else if(porcentaje_afiliado === 8){
+}else if(porcentaje === 8){
   bonoplan = saldobono * 0.084;
 }else{
   bonoplan = 0
@@ -717,7 +728,6 @@ app.post("/Act_inversion", (req, res) => {
 
 
 app.post("/Retirar", (req, res) => {
-  
   const { usuarioId, saldo,saldototal,fecha_inicio } = req.body;
   const saldoSinComa = saldo.replace(/,/g, '');
 const saldoEntero = parseInt(saldoSinComa, 10);
@@ -1064,7 +1074,6 @@ app.get('/verify', async (req, res) => {
   }
 });
 
-
 // const accessToken = 'APP_USR-6676272883606931-030303-f63bc9cd7ddd140d4497371a37bd2576-1708323573';
 
 // app.post('/api/transfer', async (req, res) => {
@@ -1309,7 +1318,7 @@ app.post('/create-checkout-session', async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: "http://localhost:3000/success",
+      success_url: "https://iseconsultoria.com.mx/",
     });
     console.log('Datos después del create:', session.url);
     console.log('Datos :', afiliado);

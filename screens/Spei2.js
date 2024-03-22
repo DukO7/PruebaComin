@@ -11,7 +11,6 @@ const WebViewComponent = ({ route }) => {
   if (headerImageDivToRemove) {
     headerImageDivToRemove.remove();
   }
-
   const testModeDivToRemove = document.querySelector('.TestModeBadge.mx2.flex-item.width-fixed');
   if (testModeDivToRemove) {
     testModeDivToRemove.remove();

@@ -1,5 +1,6 @@
-import React, { Component, useState,useEffect } from "react";
-import { View, Text, Button, StyleSheet,TouchableOpacity,Alert,Image,Modal,ActivityIndicator
+import React, { useState,useEffect } from "react";
+import * as Linking from 'expo-linking';
+import { View, Text,StyleSheet,TouchableOpacity,Alert,Image,Modal,ActivityIndicator
  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -7,8 +8,37 @@ import axios from 'axios';
 import moment from 'moment';
 import { openBrowserAsync } from 'expo-web-browser';
 import SidebarModal from "./SidebarModal";
+
 const Pasarela = ({ route }) => {
+    const successDeepLink = Linking.createURL('success');
     const { usuario, affiliateBonus, datosafiliados, inversionesPorFecha, cuentaBancaria,textInputValue,textInputValue1} = route.params;
+    const [exchangeRates, setExchangeRates] = useState({});
+    let additionalValue;
+    let valorafiliado;
+    const fetchExchangeRates = async () => {
+      try {
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+        const data = await response.json();
+        setExchangeRates(data.rates);
+      } catch (error) {
+        console.error('Error fetching exchange rates:', error);
+      }
+    };
+  
+    const calculateMXNValue = (usdValue) => {
+      return Math.round(usdValue * exchangeRates.MXN);
+    };
+if (textInputValue === calculateMXNValue(500)) {
+  additionalValue = 5.7;
+  valorafiliado = 6;
+} else if (textInputValue === calculateMXNValue(1000)) {
+  additionalValue = 7.3;
+  valorafiliado = 7.1;
+} else if (textInputValue === calculateMXNValue(3500)) {
+  additionalValue = 8.5;
+  valorafiliado = 9.4;
+}
+
     const [isModalVisible, setIsModalVisible] = useState(false);
     console.log('esto estoy recibiendo de plan',textInputValue);
     console.log('esto estoy recibiendo de adicional',textInputValue1);
@@ -17,11 +47,21 @@ const Pasarela = ({ route }) => {
     const [showAlert, setShowAlert] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
+      fetchExchangeRates();
       const timeout = setTimeout(() => {
           setIsLoading(false);
-      }, 2000);
+      }, 1000);
       return () => clearTimeout(timeout);
   }, []);
+  
+  const closeModal = () => {
+    setIsModalVisible(false);
+};
+const handlePress1 = (screen) => {
+  console.log("Navigating to", screen);
+  closeModal(); 
+  navigation.navigate(screen, { usuario: usuario, affiliateBonus: affiliateBonus, datosafiliados: datosafiliados, inversionesPorFecha: inversionesPorFecha, cuentaBancaria: cuentaBancaria1 });
+};
     const PaymentService = {
         async createPayment() {
             const url = "https://api.mercadopago.com/checkout/preferences";
@@ -35,7 +75,7 @@ const Pasarela = ({ route }) => {
                         picture_url: "http://www.myapp.com/myimage.jpg",
                         category_id: "services",
                         quantity: 1,
-                        unit_price: parseFloat(textInputValue.mxnValue)
+                        unit_price: parseFloat(textInputValue+textInputValue1)
                     }
                 ],
                 back_urls: {
@@ -90,9 +130,9 @@ const Pasarela = ({ route }) => {
                 console.log('insertado con exito',payment.data.init_point);
                 await openBrowserAsync(payment.data.init_point);
                 PaymentService.checkPaymentStatus(payment.data.id);
-                await axios.post('http://192.168.1.72:3000/Act_inversion', {
+                await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/Act_inversion', {
                   usuarioId: usuario.id,
-                  saldo: textInputValue, 
+                  saldo: textInputValue+textInputValue1, 
                   fecha_inicio:fechaMySQL ,
               });
                 console.log('datos recibidos',payment.data.id)
@@ -142,7 +182,7 @@ const Pasarela = ({ route }) => {
       }
     
       try {
-        const response = await axios.post('http://192.168.1.72:3000/transfer', {
+        const response = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/transfer', {
           from_account: fromAccount.id,
           to_account: toAccount.id,
           amount,
@@ -156,16 +196,17 @@ const Pasarela = ({ route }) => {
     };
     const handleCheckout = async () => {
       console.log('esta siendo llamado');
-      const res = await fetch('http://192.168.1.72:3000/create-checkout-session', {
+      const res = await fetch('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           id_usuario:usuario.id,
-          amount: textInputValue.mxnValue+textInputValue1,
-          porcentaje:textInputValue.additionalValue,
-          afiliado:textInputValue.valorafiliado,
+          amount: textInputValue+textInputValue1,
+          link:successDeepLink,
+          porcentaje:additionalValue,
+          afiliado:valorafiliado,
           currency: 'mxn',
           paymentMethodType: 'card',
           paymentMethod: 'pm_card_visa',
@@ -174,9 +215,9 @@ const Pasarela = ({ route }) => {
       });
       const timestamp = new Date().getTime();
                 const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-      await axios.post('http://192.168.1.72:3000/Act_inversion', {
+      await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/Act_inversion', {
                   usuarioId: usuario.id,
-                  saldo: textInputValue.mxnValue+textInputValue1, 
+                  saldo: textInputValue+textInputValue1,
                   fecha_inicio:fechaMySQL ,
               });
       const data = await res.json();
@@ -208,7 +249,7 @@ const Pasarela = ({ route }) => {
           ) : (
             <Image
               source={{
-                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError(true)}

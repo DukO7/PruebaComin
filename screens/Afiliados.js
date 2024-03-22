@@ -94,7 +94,7 @@ export default function Afiliados({ route }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError1(true)} // Manejar error de carga de imagen
@@ -187,7 +187,7 @@ export default function Afiliados({ route }) {
                 // Intenta cargar la imagen
                 <Image
                   source={{
-                    uri: `http://192.168.1.72:3000/uploads/${afiliado.id}.jpg`,
+                    uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${afiliado.id}.jpg`,
                   }}
                   style={styles.profileImage2}
                   onError={() => handleImageError(index)} // Manejar error de carga de imagen

@@ -65,13 +65,13 @@ export default function Home({ route }) {
 
     const handleCustomScheme = async (url) => {
       // Lógica para manejar los esquemas personalizados
-      if (url.startsWith('tuapp://checkout/success')) {
+      if (url.startsWith('comin://checkout/success')) {
         // Manejar compra exitosa
-      } else if (url.startsWith('tuapp://checkout/failure')) {
+      } else if (url.startsWith('comin://checkout/failure')) {
         // Manejar compra fallida
-      } else if (url.startsWith('tuapp://stripe/success')) {
+      } else if (url.startsWith('comin://stripe/success')) {
         // Manejar pago exitoso de Stripe
-      } else if (url.startsWith('tuapp://stripe/cancel')) {
+      } else if (url.startsWith('comin://stripe/cancel')) {
         navigation.navigate("Cancel");
       }
     };
@@ -91,7 +91,7 @@ export default function Home({ route }) {
 
     const timeout = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1000);
     return () => clearTimeout(timeout);
   }, [isFocused]);
 
@@ -163,7 +163,7 @@ export default function Home({ route }) {
     formData.append("id", usuario.id);
     try {
       const response = await axios.post(
-        "http://192.168.1.72:3000/upload",
+        "https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/upload",
         formData,
         {
           headers: {
@@ -482,7 +482,7 @@ onPress={() => {
           <Image
           key={updateKey}
           source={{
-            uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg?${updateKey}`, // Agrega un parámetro único para forzar la actualización
+            uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg?${updateKey}`, // Agrega un parámetro único para forzar la actualización
           }}
             style={styles.profileImage}
             onError={() => setImageError(true)} // Manejar error de carga de imagen
@@ -593,11 +593,10 @@ onPress={() => {
           </View>
           <View style={styles.line}></View>
           <View style={styles.textContainer1}>
-            <Text style={styles.textDerecha}>vgm@direcciondecorreo.com</Text>
+            <Text style={styles.textDerecha}>{usuario.correo_electronico}</Text>
           </View>
         </View>
       </View>
-
       <View style={styles.containernav}>
         <TouchableOpacity
           style={styles.leftIcon}

@@ -45,7 +45,7 @@ export default function Registro(props) {
     };
 
     // Realizar la solicitud HTTP POST al backend
-    axios.post('http://192.168.1.72:3000/registro', data)
+    axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/registro', data)
     .then(response => {
       // Manejar la respuesta del servidor si es necesario
       console.log('Registro exitoso:', response.data);
@@ -72,7 +72,7 @@ export default function Registro(props) {
   };
 
   const enviarCorreoDeVerificacion = async (correo_electronico) => {
-    const url = 'http://192.168.1.72:3000/sendVerificationEmail'; // Reemplaza esto con la URL de tu servidor
+    const url = 'https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/sendVerificationEmail'; // Reemplaza esto con la URL de tu servidor
   
     const requestBody = {
       userEmail: correo_electronico, // Correo electrónico del usuario

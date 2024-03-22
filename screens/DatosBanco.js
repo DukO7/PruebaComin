@@ -128,7 +128,7 @@ export default function DatosBanco({ route }) {
 
   const insertarDatosUsuario = async (datosUsuario) => {
     try {
-      const response = await axios.post('http://192.168.1.72:3000/act-datosbanco', datosUsuario);
+      const response = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/act-datosbanco', datosUsuario);
       console.log('Respuesta del servidor:', response.data);
       return response.data; // Puedes devolver la respuesta del servidor si es necesario
     } catch (error) {
@@ -342,7 +342,7 @@ export default function DatosBanco({ route }) {
           <View style={{ justifyContent: "flex-start", flex: 1 }}>
             <View style={styles.containerdatos}>
               <View style={styles.textContainer}>
-                <Text style={styles.text}>Dirección de la billetera</Text>
+                <Text style={styles.text}>Dirección billetera</Text>
               </View>
               <View style={styles.line}></View>
               <View style={styles.textContainer1}>
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     left: 10,
   },
   text: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "black",
   },

@@ -21,7 +21,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.duko7.appcomin"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,6 +32,13 @@
         "projectId": "3457eeb2-929c-4d1d-b513-bb5874054926"
       }
     },
-    "owner": "duko7"
+    "owner": "duko7",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3457eeb2-929c-4d1d-b513-bb5874054926"
+    },
+    "scheme": "myapp"
   }
 }

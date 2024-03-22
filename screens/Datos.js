@@ -123,7 +123,7 @@ export default function Datos({ route }) {
 
   const insertarDatosUsuario = async (datosUsuario) => {
     try {
-      const response = await axios.post('http://192.168.1.72:3000/act-datos', datosUsuario);
+      const response = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/act-datos', datosUsuario);
       console.log('Respuesta del servidor:', response.data);
       return response.data; // Puedes devolver la respuesta del servidor si es necesario
     } catch (error) {
@@ -146,7 +146,7 @@ export default function Datos({ route }) {
       [name]: value,
     }));
   };
-
+  
   const guardarDatosUsuario = async () => {
     const datosUsuario = {
       direccion: `${direccion.calle}, ${direccion.colonia}, ${direccion.codigoPostal}, ${direccion.ciudad}, ${direccion.estado}, ${direccion.pais}`,
@@ -202,7 +202,7 @@ export default function Datos({ route }) {
             // Intenta cargar la imagen
             <Image
               source={{
-                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError(true)} // Manejar error de carga de imagen

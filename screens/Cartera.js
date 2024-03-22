@@ -20,7 +20,7 @@ export default function Cartera({ route }) {
     const fetchData = async () => {
       try {
         if (usuario && isFocused) { // Verificar si el usuario está definido y la pantalla está enfocada
-          const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
+          const afiliados = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
           SetcuentaBancaria(afiliados.data.cuenta);
           console.log('Esto se recibe:', cuentaBancaria1);
         }
@@ -47,7 +47,7 @@ export default function Cartera({ route }) {
     fetchData();
     const timeout = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1000);
     return () => clearTimeout(timeout);
   }, [showDeposits, inversionesPorFecha,isFocused]);
   console.log('esto regresa cuentaBancaria1',cuentaBancaria1);
@@ -110,7 +110,7 @@ export default function Cartera({ route }) {
           ) : (
             <Image
               source={{
-                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg`,
               }}
               style={styles.profileImage}
               onError={() => setImageError(true)}

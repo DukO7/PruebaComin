@@ -42,7 +42,7 @@ export default function Inversiones({ route }) {
         const fetchData = async () => {
             try {
               // Supongamos que obtienes el usuario de alguna manera
-              const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
+              const afiliados = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/update-balance', { usuarioId: usuario.id, codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado });
               SetcuentaBancaria (afiliados.data.cuenta);
               console.log('Esto se recibe1:', cuentaBancaria1);
             } catch (error) {
@@ -54,7 +54,7 @@ export default function Inversiones({ route }) {
 
         const timeout = setTimeout(() => {
             setIsLoading(false);
-          }, 2000);
+          }, 1000);
           return () => clearTimeout(timeout);
       }, [isFocused]);
 
@@ -179,7 +179,7 @@ export default function Inversiones({ route }) {
                 const timestamp = new Date().getTime();
                 const fechaMySQL = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
                 console.log('esta es la fecha que guardara:',timestamp);
-                await axios.post('http://192.168.1.72:3000/Act_inversion', {
+                await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/Act_inversion', {
                     usuarioId: usuario.id,
                     saldo: selectedAdditionalPlan, 
                     fecha_inicio:fechaMySQL ,
@@ -260,7 +260,7 @@ export default function Inversiones({ route }) {
                         
                         <Image
                             source={{
-                                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                                uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg`,
                             }}
                             style={styles.profileImage}
                             onError={() => setImageError(true)}
@@ -386,6 +386,7 @@ export default function Inversiones({ route }) {
         </Modal>
       );
 
+      const starterPlan = { mxnValue: calculateMXNValue(500), additionalValue: 5.7, valorAfiliado: 6 };
     const MainScreen = ()=>{
         return(
             <View style={styles.container}>
@@ -402,7 +403,7 @@ export default function Inversiones({ route }) {
                         
                         <Image
                             source={{
-                                uri: `http://192.168.1.72:3000/uploads/${usuario.id}.jpg`,
+                                uri: `https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/uploads/${usuario.id}.jpg`,
                             }}
                             style={styles.profileImage}
                             onError={() => setImageError(true)}
@@ -449,18 +450,16 @@ export default function Inversiones({ route }) {
       <Picker
         selectedValue={selectedPlan}
         onValueChange={(itemValue) => setSelectedPlan(itemValue)}
-        style={styles.picker}
-      >
+        style={styles.picker}>
         <Picker.Item label="Seleccionar plan" value="" />
-        <Picker.Item label="STARTER" value={{ mxnValue: calculateMXNValue(500), additionalValue: 5.7,valorafiliado:6}} />
-        <Picker.Item label="AVANZADO" value={{ mxnValue: calculateMXNValue(1000), additionalValue:7.3,valorafiliado:7.1 }} />
-        <Picker.Item label="PREMIER" value={{ mxnValue: calculateMXNValue(3500), additionalValue: 8.5,valorafiliado:9.4 }} />
+        <Picker.Item label="STARTER" value={calculateMXNValue(500)}/>
+        <Picker.Item label="AVANZADO" value={calculateMXNValue(1000)} />
+        <Picker.Item label="PREMIER" value={calculateMXNValue(3500)} />
       </Picker>
       <Picker
         selectedValue={selectedAdditionalPlan}
         onValueChange={(itemValue) => setSelectedAdditionalPlan(itemValue)}
-        style={styles.picker}
-      >
+        style={styles.picker}>
         <Picker.Item label="Seleccionar plan adicional" value="" />
         <Picker.Item label={`+200 USD (aprox. MXN ${calculateMXNValue(200)})`} value={calculateMXNValue(200)} />
         <Picker.Item label={`+500 USD (aprox. MXN ${calculateMXNValue(500)})`} value={calculateMXNValue(500)} />

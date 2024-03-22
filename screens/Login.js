@@ -17,7 +17,6 @@ export default function Login(props) {
     const [useBiometric, setUseBiometric] = useState(true);
     const scaleValue = useRef(new Animated.Value(0)).current;
     useEffect(() => {
-        
         const loadSavedCredentials = async () => {
             try {
                 const savedUsername = await AsyncStorage.getItem("email");
@@ -85,10 +84,10 @@ export default function Login(props) {
 
       const handleLogin = async () => {
         try {
-            const response = await axios.post('http://192.168.1.72:3000/login', { correo_electronico: email, password });
+            const response = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/login', { correo_electronico: email, password });
             console.log('Respuesta del servidor:', response.data);
             if (response.status === 200 && response.data) {
-                if (response.data.usuario) {    
+                if (response.data.usuario) {
                     const usuario = response.data.usuario;
                     console.log('esto recibo de verificado',usuario.correoElectronicoVerificado)
                     if (usuario.correoElectronicoVerificado == 0) {
@@ -101,7 +100,7 @@ export default function Login(props) {
                         console.log('datos del token recibidos o guarados', response.data.token);
                         console.log('datos recibidos porcentajes',usuario.porcentaje,usuario.porcentaje_afiliado);
                         // Verificar si el usuario tiene afiliados y actualizar su saldo
-                        const afiliados = await axios.post('http://192.168.1.72:3000/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado});
+                        const afiliados = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/update-balance', {usuarioId: usuario.id,codigoAfiliado: usuario.codigo_afiliado, porcentaje:usuario.porcentaje,porcentaje_afiliado:usuario.porcentaje_afiliado});
                         console.log('datos recibidos porcentajes2',usuario.porcentaje,usuario.porcentaje_afiliado);
                         console.log('este dato se envia a update',usuario.codigo_afiliado);
                         const affiliateBonus= afiliados.data.affiliateBonus;
@@ -185,7 +184,7 @@ export default function Login(props) {
         const decoded = token;
         if (decoded) {
           // Si el token es válido, envíalo al servidor
-          const response = await axios.post('http://192.168.1.72:3000/autenticacion-biometrica', { token });
+          const response = await axios.post('https://a3af-2806-10a6-16-2dc5-813d-4b98-3ea8-9707.ngrok-free.app/autenticacion-biometrica', { token });
           if (response.status === 200) {
             // Si la autenticación biométrica es exitosa, navega a la pantalla principal
             props.navigation.navigate('Home');
@@ -210,7 +209,6 @@ export default function Login(props) {
     Alert.alert('Error', 'Hubo un error en la autenticación biométrica. Por favor, inténtalo de nuevo.');
   }
 };
-
     const handleLoginAndShowAlert = () => {
         handleLogin();
       };
@@ -227,7 +225,7 @@ export default function Login(props) {
                     <Animated.View style={[styles.formContainer, { transform: [{ scale: scaleValue }] }]}>
                     <View style={styles.cajaTexto}>
                         <TextInput placeholder='Usuario / ID' style={{ paddingHorizontal: 65 }} onChangeText={(text) => setEmail(text)}  autoCapitalize='none'/>
-                        <Ionicons name='person' size={35} color='white' style={styles.iconoUsuario} />
+                        <Ionicons name='person' size={25} color='white' style={styles.iconoUsuario} />
                     </View>
                     </Animated.View>
                 )}
@@ -243,9 +241,9 @@ export default function Login(props) {
                             onChangeText={(text) => setPassword(text)}
                             autoCapitalize='none'
                         />
-                        <Ionicons name='lock-closed-outline' size={35} color='white' style={styles.iconoUsuario} />
+                        <Ionicons name='lock-closed-outline' size={25} color='white' style={styles.iconoUsuario} />
                         <TouchableOpacity onPress={togglePasswordVisibility} style={styles.iconoMostrar}>
-                            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={35} color='gray' />
+                            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={25} color='gray' />
                         </TouchableOpacity>
                     </View>
                     </Animated.View>
@@ -403,7 +401,7 @@ const styles = StyleSheet.create({
     iconoUsuario: {
         position: 'absolute',
         left: 2,
-        top: 4,
+        top: 7,
         backgroundColor: '#1d2027',
         padding: 10,
         borderRadius: 10,

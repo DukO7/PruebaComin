@@ -14,7 +14,7 @@ const LastConnection = ({ lastConnection }) => {
 
   // Formatear la fecha y hora
   const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}`;
-
+  
   return (
     <Text style={styles.lastConnection}>Última conexión: {formattedDate}</Text>
   );
